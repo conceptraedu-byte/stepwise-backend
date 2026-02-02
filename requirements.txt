@@ -6,4 +6,4 @@ python-dotenv
 motor==3.4.0
 pymongo==4.7.2
 dnspython==2.6.1
-google-generativeai
+google-genai
