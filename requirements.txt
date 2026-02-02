@@ -2,4 +2,4 @@ fastapi
 uvicorn
 httpx
 python-dotenv
-motor
+motor==3.3.2
