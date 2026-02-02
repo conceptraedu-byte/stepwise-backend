@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, HTTPException
 from app.socratic import socratic_reply
 from app.db import users_collection
 import httpx
@@ -6,19 +6,37 @@ import os
 
 router = APIRouter()
 
-TELEGRAM_API = f"https://api.telegram.org/bot{os.getenv('TELEGRAM_BOT_TOKEN')}"
-FREE_LIMIT = 10  # <-- THIS IS WHERE 10 IS SET
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+if not TELEGRAM_BOT_TOKEN:
+    raise RuntimeError("TELEGRAM_BOT_TOKEN is not set")
+
+TELEGRAM_API = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}"
+
+FREE_LIMIT = 10  # free questions per user
+
 
 @router.post("/webhook")
 async def telegram_webhook(request: Request):
-    data = await request.json()
-    chat_id = data["message"]["chat"]["id"]
-    text = data["message"].get("text", "")
+    # ---- SAFETY CHECKS ----
+    if users_collection is None:
+        raise RuntimeError("MongoDB users_collection is not initialized")
 
-    # ---- USER LOOKUP ----
-    user = await users_collection.find_one({"chat_id": chat_id})
+    data = await request.json()
+
+    # Telegram sometimes sends non-message updates
+    if "message" not in data:
+        return {"ok": True}
+
+    message = data["message"]
+    chat_id = message["chat"]["id"]
+    text = message.get("text", "").strip()
+
+    if not text:
+        return {"ok": True}
 
     async with httpx.AsyncClient() as client:
+        # ---- USER LOOKUP ----
+        user = await users_collection.find_one({"chat_id": chat_id})
 
         # ---- NEW USER ----
         if not user:
@@ -29,14 +47,14 @@ async def telegram_webhook(request: Request):
             })
 
         # ---- LIMIT REACHED ----
-        elif user["total_questions_asked"] >= FREE_LIMIT:
+        elif user.get("total_questions_asked", 0) >= FREE_LIMIT:
             await client.post(
                 f"{TELEGRAM_API}/sendMessage",
                 json={
                     "chat_id": chat_id,
                     "text": (
-                        "You’ve reached the free limit of 10 questions.\n\n"
-                        "Share your contact to unlock more."
+                        "🚫 You’ve reached the free limit of 10 questions.\n\n"
+                        "📩 Share your contact to unlock unlimited access."
                     )
                 }
             )
@@ -49,12 +67,15 @@ async def telegram_webhook(request: Request):
                 {"$inc": {"total_questions_asked": 1}}
             )
 
-        # ---- SOCratic REPLY ----
+        # ---- SOCRATIC REPLY ----
         reply = socratic_reply(text)
 
         await client.post(
             f"{TELEGRAM_API}/sendMessage",
-            json={"chat_id": chat_id, "text": reply}
+            json={
+                "chat_id": chat_id,
+                "text": reply
+            }
         )
 
     return {"ok": True}
