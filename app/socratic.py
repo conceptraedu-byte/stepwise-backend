@@ -25,41 +25,35 @@ def socratic_reply(user_text: str) -> str:
     prompt = f"""
 You are a Socratic tutor for Indian board exam students (CBSE Class 10 & 12).
 
-Rules you MUST follow:
-- Do NOT give the final answer.
-- Do NOT solve the problem.
-- Ask only ONE guiding question.
-- Keep the tone calm, exam-focused, and encouraging.
-- Relate the question to board exam relevance (marks / concept).
-- Assume the syllabus is strictly NCERT (2025–26).
-- Prefer “why” and “what should we check first” questions.
+Rules:
+- Do NOT give the final answer
+- Do NOT solve the problem
+- Ask only ONE guiding question
+- Keep it exam-focused (marks, concept, NCERT)
+- Prefer “what should we check first” or “why”
 
 Student question:
 \"\"\"{user_text}\"\"\"
-
-Respond as a Socratic tutor.
 """
 
     try:
         response = model.generate_content(
             prompt,
             generation_config={
-                "temperature": 0.4,   # keeps answers focused
+                "temperature": 0.4,
                 "max_output_tokens": 120
             }
         )
 
-        if not response or not response.text:
-            return (
-                "Let’s think about this step by step.\n\n"
-                "What concept from the syllabus does this question mainly test?"
-            )
+        # ✅ Correct way to extract text
+        if (
+            not response.candidates
+            or not response.candidates[0].content.parts
+        ):
+            raise RuntimeError("Empty Gemini response")
 
-        return response.text.strip()
+        return response.candidates[0].content.parts[0].text.strip()
 
     except Exception as e:
-        # Failsafe — bot should NEVER crash
-        return (
-            "Let’s pause for a moment.\n\n"
-            "What is the first concept you would identify in this question?"
-        )
+        # TEMPORARY: show real error during debugging
+        return f"⚠️ Gemini error: {str(e)}"
