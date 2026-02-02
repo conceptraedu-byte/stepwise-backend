@@ -1,19 +1,11 @@
 import os
-from google import genai
+import google.generativeai as genai
 
-# -------------------------------
-# Gemini setup (NEW SDK)
-# -------------------------------
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-if not GEMINI_API_KEY:
-    raise RuntimeError("GEMINI_API_KEY not set")
+# Configure Gemini
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
-client = genai.Client(api_key=GEMINI_API_KEY)
+model = genai.GenerativeModel("gemini-pro")
 
-
-# -------------------------------
-# Core Socratic reply function
-# -------------------------------
 def socratic_reply(user_text: str) -> str:
     user_text = user_text.strip()
 
@@ -21,34 +13,28 @@ def socratic_reply(user_text: str) -> str:
         return "Please type your question."
 
     prompt = f"""
-You are a Socratic tutor for Indian board exam students (CBSE Class 10 & 12).
+You are a Socratic tutor for CBSE Class 10 & 12 students.
 
 Rules:
 - Do NOT give the final answer
-- Do NOT solve the problem
-- Ask only ONE guiding question
-- Be exam-focused (marks, NCERT relevance)
-- Prefer “what should we check first” or “why”
+- Ask ONLY one guiding question
+- Be exam-oriented (NCERT, marks-focused)
+- Keep tone calm and encouraging
 
 Student question:
 \"\"\"{user_text}\"\"\"
 """
 
     try:
-        response = client.models.generate_content(
-            model="models/gemini-pro",
-            contents=prompt,
-            config={
+        response = model.generate_content(
+            prompt,
+            generation_config={
                 "temperature": 0.4,
                 "max_output_tokens": 120
             }
         )
 
-        if not response.text:
-            raise RuntimeError("Empty Gemini response")
-
         return response.text.strip()
 
     except Exception as e:
-        # keep bot alive, but expose error during dev
-        return f"⚠️ Gemini error: {str(e)}"
+        return "Let’s pause and think. What concept from the syllabus does this question test?"
