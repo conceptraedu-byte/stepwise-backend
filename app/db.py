@@ -10,12 +10,17 @@ def init_db():
     global client, db, users_collection
 
     mongo_uri = os.getenv("MONGO_URI")
-
     if not mongo_uri:
-        raise RuntimeError("MONGO_URI is not set in environment variables")
+        raise RuntimeError("MONGO_URI is not set")
 
-    client = AsyncIOMotorClient(mongo_uri)
+    client = AsyncIOMotorClient(
+        mongo_uri,
+        tls=True,
+        tlsAllowInvalidCertificates=True,
+        serverSelectionTimeoutMS=5000
+    )
+
     db = client["stepwise"]
     users_collection = db["users"]
 
-    print("✅ MongoDB connected successfully")
+    print("✅ MongoDB client initialized")
