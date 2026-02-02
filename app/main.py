@@ -8,3 +8,7 @@ app.include_router(telegram_router)
 @app.get("/")
 async def health_check():
     return {"status": "ok"}
+
+@app.on_event("startup")
+async def startup():
+    init_db()
