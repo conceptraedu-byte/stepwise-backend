@@ -36,7 +36,7 @@ Student question:
 
     try:
         response = client.models.generate_content(
-            model="gemini-1.0-pro",
+            model="models/gemini-pro",
             contents=prompt,
             config={
                 "temperature": 0.4,
