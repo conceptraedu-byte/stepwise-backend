@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Request
+from app.socratic import socratic_reply
 import httpx
 import os
 
@@ -12,7 +13,7 @@ async def telegram_webhook(request: Request):
     chat_id = data["message"]["chat"]["id"]
     text = data["message"].get("text", "")
 
-    reply = f"Received: {text}"
+    reply = socratic_reply(text)
 
     async with httpx.AsyncClient() as client:
         await client.post(
