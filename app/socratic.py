@@ -1,40 +1,46 @@
 import os
-import google.generativeai as genai
+from google import genai
 
-# Configure Gemini
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+# -----------------------------
+# Gemini client (NEW SDK)
+# -----------------------------
+client = genai.Client(
+    api_key=os.getenv("GEMINI_API_KEY")
+)
 
-model = genai.GenerativeModel("gemini-pro")
+MODEL = "models/gemini-2.0-flash"  # ✅ CURRENTLY SUPPORTED
+
 
 def socratic_reply(user_text: str) -> str:
-    user_text = user_text.strip()
-
-    if not user_text:
+    if not user_text or not user_text.strip():
         return "Please type your question."
 
     prompt = f"""
 You are a Socratic tutor for CBSE Class 10 & 12 students.
 
 Rules:
-- Do NOT give the final answer
-- Ask ONLY one guiding question
-- Be exam-oriented (NCERT, marks-focused)
-- Keep tone calm and encouraging
+- Do NOT give the final answer.
+- Ask ONLY ONE guiding question.
+- Focus on NCERT concepts.
+- Be exam-oriented.
+- Encourage thinking, not solving.
 
 Student question:
-\"\"\"{user_text}\"\"\"
+{user_text}
+
+Ask your Socratic question now.
 """
 
     try:
-        response = model.generate_content(
-            prompt,
-            generation_config={
-                "temperature": 0.4,
-                "max_output_tokens": 120
-            }
+        response = client.models.generate_content(
+            model=MODEL,
+            contents=prompt
         )
 
         return response.text.strip()
 
     except Exception as e:
-        return "Let’s pause and think. What concept from the syllabus does this question test?"
+        return (
+            "Let’s pause and think carefully.\n\n"
+            "Which chapter or core concept does this question belong to?"
+        )
