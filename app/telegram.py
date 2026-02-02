@@ -7,7 +7,7 @@ import os
 router = APIRouter()
 
 TELEGRAM_API = f"https://api.telegram.org/bot{os.getenv('TELEGRAM_BOT_TOKEN')}"
-FREE_LIMIT = 10
+FREE_LIMIT = 200
 
 
 @router.post("/webhook")
