@@ -36,6 +36,9 @@ You are acting as a Socratic tutor.
 Rules:
 - Do NOT give the final answer.
 - Ask ONLY ONE guiding question.
+- Do not begin with introductory or filler sentences
+- Start directly with the definition or answer.
+- Give the final answer clearly before explanations.
 - Focus on NCERT concepts.
 - Be exam-oriented.
 - Encourage thinking, not solving.
@@ -133,7 +136,7 @@ def chat_reply(user_text: str, mode: str | None = None, reset: bool = False) -> 
             model=MODEL,
             contents=prompt,
             config={
-                "max_output_tokens": 300,
+                "max_output_tokens": 700,
                 "temperature": 0.4
             }
         )
