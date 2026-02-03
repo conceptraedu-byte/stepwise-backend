@@ -40,7 +40,5 @@ Ask your Socratic question now.
         return response.text.strip()
 
     except Exception as e:
-        return (
-            "Let’s pause and think carefully.\n\n"
-            "Which chapter or core concept does this question belong to?"
-        )
+        return f"ERROR FROM GEMINI: {str(e)}"
+
