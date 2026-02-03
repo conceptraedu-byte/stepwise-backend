@@ -73,33 +73,28 @@ USER QUESTION:
 """
 
 def extract_text(response) -> str:
+    """
+    Robust text extraction for google.genai SDK
+    """
     texts = []
 
-    # Case 1: response.text exists
-    if hasattr(response, "text") and response.text:
-        texts.append(response.text)
-
-    # Case 2: extract all candidate parts
     try:
         for candidate in response.candidates:
-            for part in candidate.content.parts:
+            content = candidate.content
+            if not content:
+                continue
+
+            for part in content.parts:
                 if hasattr(part, "text") and part.text:
                     texts.append(part.text)
-    except Exception:
-        pass
+
+    except Exception as e:
+        return f"⚠️ Response parsing error: {e}"
 
     if texts:
-        # Remove duplicates while preserving order
-        seen = set()
-        cleaned = []
-        for t in texts:
-            if t not in seen:
-                cleaned.append(t)
-                seen.add(t)
+        return "\n".join(texts).strip()
 
-        return "\n".join(cleaned).strip()
-
-    return "⚠️ I couldn’t generate a complete answer. Please try again."
+    return "⚠️ Gemini returned no text output."
 
 
 # -----------------------------
