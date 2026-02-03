@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Request
-from app.socratic import socratic_reply
+from app.socratic import chat_reply, clear_chat
 from app import db
 import httpx
 import os
@@ -23,6 +23,19 @@ async def telegram_webhook(request: Request):
     if not text:
         return {"ok": True}
 
+    # 🔹 Handle /clear BEFORE Gemini
+    if text.lower() in ("/clear", "/reset", "/new"):
+        clear_chat()
+        async with httpx.AsyncClient() as client:
+            await client.post(
+                f"{TELEGRAM_API}/sendMessage",
+                json={
+                    "chat_id": chat_id,
+                    "text": "✅ New chat started. Ask a fresh question."
+                }
+            )
+        return {"ok": True}
+
     if db.users_collection is None:
         raise RuntimeError("MongoDB users_collection is not initialized")
 
@@ -41,7 +54,7 @@ async def telegram_webhook(request: Request):
                 f"{TELEGRAM_API}/sendMessage",
                 json={
                     "chat_id": chat_id,
-                    "text": "🚫 You’ve reached the free limit of 10 questions.\n\nShare your contact to continue."
+                    "text": f"🚫 You’ve reached the free limit of {FREE_LIMIT} questions.\n\nShare your contact to continue."
                 }
             )
             return {"ok": True}
@@ -52,7 +65,8 @@ async def telegram_webhook(request: Request):
                 {"$inc": {"total_questions_asked": 1}}
             )
 
-        reply = socratic_reply(text)
+        # ✅ Correct variable
+        reply = chat_reply(text)
 
         await client.post(
             f"{TELEGRAM_API}/sendMessage",
