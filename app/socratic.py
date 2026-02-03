@@ -21,10 +21,78 @@ chat_states = {}  # chat_id -> state
 def get_chat_state(chat_id: int):
     if chat_id not in chat_states:
         chat_states[chat_id] = {
-            "mode": "direct",     # direct | socratic
-            "messages": []        # [{"role": "user"/"assistant", "content": "..."}]
+            "mode": "direct",
+            "messages": [],
+            "class": None,
+            "subject": None,
+            "chapter": None,
+            "last_topic": None
         }
     return chat_states[chat_id]
+
+# =========================================================
+# ✅ NEW: SYLLABUS + IMPORTANT TOPICS (CBSE + STATE BOARDS)
+# =========================================================
+
+SYLLABUS = {
+    "class_10": {
+        "physics": {
+            "motion": {
+                "topics": {
+                    "distance": "basic",
+                    "velocity": "important",
+                    "acceleration": "very_important",
+                    "equations of motion": "very_important",
+                    "graphs of motion": "important"
+                },
+                "boards": ["CBSE", "TN", "AP", "TS", "KA"]
+            },
+            "electricity": {
+                "topics": {
+                    "electric current": "important",
+                    "potential difference": "important",
+                    "ohm's law": "very_important",
+                    "resistance": "important",
+                    "electric power": "very_important"
+                },
+                "boards": ["CBSE", "TN", "AP", "TS"]
+            }
+        }
+    },
+    "class_12": {
+        "physics": {
+            "electrostatics": {
+                "topics": {
+                    "coulomb's law": "very_important",
+                    "electric field": "important",
+                    "electric potential": "very_important"
+                },
+                "boards": ["CBSE", "TN", "AP"]
+            }
+        }
+    }
+}
+
+# =========================================================
+# ✅ NEW: TOPIC DETECTION (LIGHTWEIGHT, RULE-BASED)
+# =========================================================
+
+def detect_topic(user_text: str):
+    text = user_text.lower()
+
+    for class_key, subjects in SYLLABUS.items():
+        for subject, chapters in subjects.items():
+            for chapter, data in chapters.items():
+                for topic in data["topics"]:
+                    if topic in text:
+                        return {
+                            "class": class_key.replace("_", " "),
+                            "subject": subject,
+                            "chapter": chapter,
+                            "topic": topic,
+                            "importance": data["topics"][topic]
+                        }
+    return None
 
 # -----------------------------
 # SYSTEM PROMPTS (UX-FIRST)
@@ -92,8 +160,14 @@ RULES:
 # -----------------------------
 def clear_chat(chat_id: int):
     state = get_chat_state(chat_id)
-    state["mode"] = "direct"
-    state["messages"] = []
+    state.update({
+        "mode": "direct",
+        "messages": [],
+        "class": None,
+        "subject": None,
+        "chapter": None,
+        "last_topic": None
+    })
     return "🆕 New chat started. Ask a fresh question."
 
 
@@ -128,7 +202,7 @@ STUDENT QUESTION:
 """
 
 # -----------------------------
-# Gemini call with retry (503 safe)
+# Gemini call with retry
 # -----------------------------
 def generate_with_retry(prompt, retries=2, delay=2):
     for attempt in range(retries + 1):
@@ -148,7 +222,7 @@ def generate_with_retry(prompt, retries=2, delay=2):
             raise
 
 # -----------------------------
-# Robust response extraction
+# Response extraction
 # -----------------------------
 def extract_text(response) -> str:
     texts = []
@@ -172,13 +246,7 @@ def extract_text(response) -> str:
         return "⚠️ Response parsing error. Please try again."
 
     if texts:
-        seen = set()
-        final = []
-        for t in texts:
-            if t not in seen:
-                final.append(t)
-                seen.add(t)
-        return "\n".join(final).strip()
+        return "\n".join(dict.fromkeys(texts)).strip()
 
     return "⚠️ I couldn’t generate a response. Please try again."
 
@@ -199,6 +267,14 @@ def chat_reply(
         return "Please type your question."
 
     state = get_chat_state(chat_id)
+
+    # 🔍 Detect topic (NEW)
+    detected = detect_topic(user_text)
+    if detected:
+        state["class"] = detected["class"]
+        state["subject"] = detected["subject"]
+        state["chapter"] = detected["chapter"]
+        state["last_topic"] = detected["topic"]
 
     if mode in ("direct", "socratic"):
         state["mode"] = mode
