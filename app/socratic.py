@@ -73,22 +73,34 @@ USER QUESTION:
 """
 
 def extract_text(response) -> str:
-    """
-    Safely extract text from Gemini response (NEW SDK compatible)
-    """
-    if hasattr(response, "text") and response.text:
-        return response.text.strip()
+    texts = []
 
-    # Fallback: extract from candidates/parts
+    # Case 1: response.text exists
+    if hasattr(response, "text") and response.text:
+        texts.append(response.text)
+
+    # Case 2: extract all candidate parts
     try:
-        parts = response.candidates[0].content.parts
-        texts = [p.text for p in parts if hasattr(p, "text") and p.text]
-        if texts:
-            return "\n".join(texts).strip()
+        for candidate in response.candidates:
+            for part in candidate.content.parts:
+                if hasattr(part, "text") and part.text:
+                    texts.append(part.text)
     except Exception:
         pass
 
-    return "⚠️ I couldn’t generate a proper response. Please try again."
+    if texts:
+        # Remove duplicates while preserving order
+        seen = set()
+        cleaned = []
+        for t in texts:
+            if t not in seen:
+                cleaned.append(t)
+                seen.add(t)
+
+        return "\n".join(cleaned).strip()
+
+    return "⚠️ I couldn’t generate a complete answer. Please try again."
+
 
 # -----------------------------
 # Main entry function
