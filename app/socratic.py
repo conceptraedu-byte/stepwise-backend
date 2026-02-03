@@ -92,7 +92,7 @@ def chat_reply(user_text: str, mode: str | None = None, reset: bool = False) -> 
         response = client.models.generate_content(
             model=MODEL,
             contents=prompt,
-            generation_config={
+            config={
                 "max_output_tokens": 300,
                 "temperature": 0.4
             }
