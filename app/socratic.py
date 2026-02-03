@@ -8,7 +8,7 @@ client = genai.Client(
     api_key=os.getenv("GEMINI_API_KEY")
 )
 
-MODEL = "models/gemini-1.5-flash"  # ✅ CURRENTLY SUPPORTED
+MODEL = "models/gemini-flash-latest"  # ✅ CURRENTLY SUPPORTED
 
 
 def socratic_reply(user_text: str) -> str:
