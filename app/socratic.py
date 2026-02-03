@@ -14,7 +14,7 @@ MODEL = "models/gemini-flash-latest"
 # -----------------------------
 # Per-user conversation state (IN-MEMORY)
 # -----------------------------
-MAX_HISTORY = 8
+MAX_HISTORY = 10
 chat_states = {}  # chat_id -> state
 
 
@@ -31,106 +31,128 @@ def get_chat_state(chat_id: int):
     return chat_states[chat_id]
 
 # =========================================================
-# SYLLABUS + IMPORTANT TOPICS (CBSE + STATE BOARDS)
+# ✅ NEW: SYLLABUS + IMPORTANT TOPICS (CBSE + STATE BOARDS)
 # =========================================================
 
 SYLLABUS = {
     "class_10": {
         "physics": {
             "motion": {
-                "topics": [
-                    "distance", "velocity", "acceleration",
-                    "equations of motion", "graphs of motion"
-                ]
+                "topics": {
+                    "distance": "basic",
+                    "velocity": "important",
+                    "acceleration": "very_important",
+                    "equations of motion": "very_important",
+                    "graphs of motion": "important"
+                },
+                "boards": ["CBSE", "TN", "AP", "TS", "KA"]
             },
             "electricity": {
-                "topics": [
-                    "electric current", "potential difference",
-                    "ohm's law", "resistance", "electric power"
-                ]
+                "topics": {
+                    "electric current": "important",
+                    "potential difference": "important",
+                    "ohm's law": "very_important",
+                    "resistance": "important",
+                    "electric power": "very_important"
+                },
+                "boards": ["CBSE", "TN", "AP", "TS"]
             }
         }
     },
     "class_12": {
         "physics": {
             "electrostatics": {
-                "topics": [
-                    "coulomb's law", "electric field", "electric potential"
-                ]
+                "topics": {
+                    "coulomb's law": "very_important",
+                    "electric field": "important",
+                    "electric potential": "very_important"
+                },
+                "boards": ["CBSE", "TN", "AP"]
             }
         }
     }
 }
 
 # =========================================================
-# Topic detection
+# ✅ NEW: TOPIC DETECTION (LIGHTWEIGHT, RULE-BASED)
 # =========================================================
 
 def detect_topic(user_text: str):
     text = user_text.lower()
 
-    for cls, subjects in SYLLABUS.items():
+    for class_key, subjects in SYLLABUS.items():
         for subject, chapters in subjects.items():
             for chapter, data in chapters.items():
                 for topic in data["topics"]:
                     if topic in text:
                         return {
-                            "class": cls.replace("_", " "),
+                            "class": class_key.replace("_", " "),
                             "subject": subject,
                             "chapter": chapter,
-                            "topic": topic
+                            "topic": topic,
+                            "importance": data["topics"][topic]
                         }
     return None
 
-# =========================================================
-# OFF-SYLLABUS KEYWORDS (HARD GUARD)
-# =========================================================
-
-OFF_SYLLABUS_KEYWORDS = [
-    "schrodinger", "quantum", "wave function",
-    "relativity", "black hole", "string theory"
-]
-
-def is_off_syllabus(user_text: str) -> bool:
-    text = user_text.lower()
-    return any(k in text for k in OFF_SYLLABUS_KEYWORDS)
-
 # -----------------------------
-# SYSTEM PROMPTS (HARDENED)
+# SYSTEM PROMPTS (UX-FIRST)
 # -----------------------------
 BASE_SYSTEM_PROMPT = """
-You are a CBSE and State Board tutor for Class 10 and 12 students.
+You are a CBSE Class 10 & 12 tutor.
 
-ABSOLUTE RULES (DO NOT VIOLATE):
-- NEVER stop mid-sentence or mid-step.
-- ALWAYS complete the response you start.
-- If a question is outside syllabus, do NOT attempt full derivations.
-- In such cases, give a short conceptual explanation only.
-
-ANSWER STYLE:
-- Start directly with the answer.
-- Keep answers exam-ready and concise.
+GENERAL RULES (VERY IMPORTANT):
+- Give SHORT, exam-ready answers by default.
+- Start directly with the definition or final answer.
 - Use plain-text math only (no LaTeX, no markdown).
-- Use Unicode symbols like ², − where helpful.
+- Use Unicode symbols where helpful (², −).
+- Write as if evaluated by a CBSE examiner.
+- Focus only on the concept asked.
+- Do not introduce related concepts unless requested.
+- Assume the student is reading on a mobile phone.
 
-LENGTH CONTROL:
-- Define / State / Give → short (2–5 lines)
-- Explain / Why / How → medium (5–8 lines)
-- Derive / Prove → step-wise ONLY if syllabus allows
+ANSWER LENGTH CONTROL:
+- "Define", "State", "Give" → 3–5 lines only.
+- "Explain", "Why", "How" → 6–8 short lines.
+- "Derive", "Prove" → step-wise format only.
 
-FOLLOW-UP RULES:
-- "steps", "explain", "example" refer to the previous topic.
+INTERACTIVITY RULE:
+- After a SHORT answer, end with ONE prompt:
+  "Want steps or an example?"
+- Do NOT ask follow-up questions after expanded answers.
+- If the answer is complete, STOP.
+
+FOLLOW-UP HANDLING:
+- If the student asks "steps", "explain", "example", or similar,
+  treat it as a follow-up to the PREVIOUS concept.
 - Do not restart the topic.
-- Do not ask follow-up questions after expanded answers.
+
+STEP-WISE EXPLANATION RULES:
+- Use 3 to 5 short numbered steps only.
+- Use plain text (no headings, no bold, no markdown).
+- Do NOT use words like "derivation".
+- Use simple formulas like: a = (v − u) / t
+- Do NOT ask another follow-up question.
+
+If the student asks "explain in detail":
+- Explain the SAME answer again in simple language.
+- Use at most 6–8 short lines.
+- Do NOT restart the proof from scratch.
+- Do NOT introduce new steps.
+- Do NOT stop mid-sentence.
+
+CLARITY RULE:
+- If the student question is vague or incomplete,
+  ask ONE clarification question instead of assuming.
 """
 
 SOCRATIC_RULES = """
 You are acting as a Socratic tutor.
 
 RULES:
-- Ask ONLY ONE guiding question.
 - Do NOT give the final answer.
-- Keep it short and exam-oriented.
+- Ask ONLY ONE guiding question.
+- Keep it simple and exam-oriented.
+- No explanations, no hints beyond one question.
 """
 
 # -----------------------------
@@ -152,6 +174,7 @@ def clear_chat(chat_id: int):
 def add_message(chat_id: int, role: str, content: str):
     state = get_chat_state(chat_id)
     state["messages"].append({"role": role, "content": content})
+
     if len(state["messages"]) > MAX_HISTORY:
         state["messages"] = state["messages"][-MAX_HISTORY:]
 
@@ -159,9 +182,9 @@ def add_message(chat_id: int, role: str, content: str):
 def build_prompt(chat_id: int, user_text: str) -> str:
     state = get_chat_state(chat_id)
 
-    history = ""
+    history_text = ""
     for m in state["messages"]:
-        history += f"{m['role'].upper()}: {m['content']}\n"
+        history_text += f"{m['role'].upper()}: {m['content']}\n"
 
     mode_prompt = SOCRATIC_RULES if state["mode"] == "socratic" else ""
 
@@ -169,53 +192,63 @@ def build_prompt(chat_id: int, user_text: str) -> str:
 {BASE_SYSTEM_PROMPT}
 {mode_prompt}
 
-Conversation context:
-{history}
+The student may ask follow-up questions referring to the previous answer.
+
+Previous conversation (for context only):
+{history_text}
 
 STUDENT QUESTION:
 {user_text}
 """
 
 # -----------------------------
-# Gemini call (SAFE)
+# Gemini call with retry
 # -----------------------------
-def generate_response(prompt):
-    return client.models.generate_content(
-        model=MODEL,
-        contents=prompt,
-        config={
-            "max_output_tokens": 500,
-            "temperature": 0.3
-        }
-    )
+def generate_with_retry(prompt, retries=2, delay=2):
+    for attempt in range(retries + 1):
+        try:
+            return client.models.generate_content(
+                model=MODEL,
+                contents=prompt,
+                config={
+                    "max_output_tokens": 600,
+                    "temperature": 0.4
+                }
+            )
+        except Exception as e:
+            if "503" in str(e) and attempt < retries:
+                time.sleep(delay)
+                continue
+            raise
 
 # -----------------------------
-# Response extraction (GUARANTEED COMPLETE)
+# Response extraction
 # -----------------------------
 def extract_text(response) -> str:
     texts = []
 
-    for candidate in (response.candidates or []):
-        content = candidate.content
-        if not content:
-            continue
+    try:
+        for candidate in (response.candidates or []):
+            content = candidate.content
+            if not content:
+                continue
 
-        if hasattr(content, "text") and content.text:
-            texts.append(content.text)
+            if hasattr(content, "text") and content.text:
+                texts.append(content.text)
 
-        parts = getattr(content, "parts", None)
-        if parts:
-            for part in parts:
-                if hasattr(part, "text") and part.text:
-                    texts.append(part.text)
+            parts = getattr(content, "parts", None)
+            if parts:
+                for part in parts:
+                    if hasattr(part, "text") and part.text:
+                        texts.append(part.text)
+
+    except Exception:
+        return "⚠️ Response parsing error. Please try again."
 
     if texts:
-        final = "\n".join(dict.fromkeys(texts)).strip()
-        if final[-1] not in ".!?":
-            final += "."
-        return final
+        return "\n".join(dict.fromkeys(texts)).strip()
 
-    return "I couldn’t generate a complete answer. Please try again."
+    return "⚠️ I couldn’t generate a response. Please try again."
 
 # -----------------------------
 # Main entry function
@@ -235,18 +268,13 @@ def chat_reply(
 
     state = get_chat_state(chat_id)
 
-    # 🔍 Topic detection
+    # 🔍 Detect topic (NEW)
     detected = detect_topic(user_text)
     if detected:
-        state.update(detected)
-
-    # 🚫 HARD STOP for off-syllabus long questions
-    if detected is None and is_off_syllabus(user_text):
-        return (
-            "This topic is outside the CBSE and State Board syllabus.\n\n"
-            "At this level, only the basic idea is expected.\n"
-            "If you want, I can explain the concept in simple terms."
-        )
+        state["class"] = detected["class"]
+        state["subject"] = detected["subject"]
+        state["chapter"] = detected["chapter"]
+        state["last_topic"] = detected["topic"]
 
     if mode in ("direct", "socratic"):
         state["mode"] = mode
@@ -254,7 +282,7 @@ def chat_reply(
     prompt = build_prompt(chat_id, user_text)
 
     try:
-        response = generate_response(prompt)
+        response = generate_with_retry(prompt)
         reply = extract_text(response)
 
         add_message(chat_id, "user", user_text)
