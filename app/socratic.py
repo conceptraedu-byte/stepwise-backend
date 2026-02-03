@@ -3,6 +3,10 @@ import time
 from datetime import datetime
 from google import genai
 
+
+print("🚨 APP/SOCRATIC.PY LOADED 🚨")
+
+
 # =============================
 # Gemini client
 # =============================
