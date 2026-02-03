@@ -275,6 +275,21 @@ def extract_text(chat_id: int, question: str, response) -> str:
     return final
 
 
+def clear_chat(chat_id: int) -> str:
+    state = get_chat_state(chat_id)
+    state.update({
+        "mode": "direct",
+        "messages": [],
+        "class": None,
+        "subject": None,
+        "chapter": None,
+        "last_topic": None,
+        "importance": None
+    })
+    return "🆕 New chat started. Ask a fresh question."
+
+
+
 # =============================
 # Main entry function
 # =============================
