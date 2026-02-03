@@ -12,15 +12,19 @@ client = genai.Client(
 MODEL = "models/gemini-flash-latest"
 
 # -----------------------------
-# Conversation state (IN-MEMORY)
-# ⚠️ Single-user only (testing)
+# Per-user conversation state (IN-MEMORY)
 # -----------------------------
 MAX_HISTORY = 10
+chat_states = {}  # chat_id -> state
 
-chat_state = {
-    "mode": "direct",          # direct | socratic
-    "messages": []             # [{"role": "user"/"assistant", "content": "..."}]
-}
+
+def get_chat_state(chat_id: int):
+    if chat_id not in chat_states:
+        chat_states[chat_id] = {
+            "mode": "direct",     # direct | socratic
+            "messages": []        # [{"role": "user"/"assistant", "content": "..."}]
+        }
+    return chat_states[chat_id]
 
 # -----------------------------
 # SYSTEM PROMPTS (UX-FIRST)
@@ -37,7 +41,6 @@ GENERAL RULES (VERY IMPORTANT):
 - Focus only on the concept asked.
 - Do not introduce related concepts unless requested.
 - Assume the student is reading on a mobile phone.
-- Give when the question is important, where to focus for board exams
 
 ANSWER LENGTH CONTROL:
 - "Define", "State", "Give" → 3–5 lines only.
@@ -62,10 +65,6 @@ STEP-WISE EXPLANATION RULES:
 - Use simple formulas like: a = (v − u) / t
 - Do NOT ask another follow-up question.
 
-CLARITY RULE:
-- If the student question is vague or incomplete,
-  ask ONE clarification question instead of assuming.
-
 If the student asks "explain in detail":
 - Explain the SAME answer again in simple language.
 - Use at most 6–8 short lines.
@@ -73,9 +72,9 @@ If the student asks "explain in detail":
 - Do NOT introduce new steps.
 - Do NOT stop mid-sentence.
 
-
-
-
+CLARITY RULE:
+- If the student question is vague or incomplete,
+  ask ONE clarification question instead of assuming.
 """
 
 SOCRATIC_RULES = """
@@ -91,26 +90,35 @@ RULES:
 # -----------------------------
 # Utilities
 # -----------------------------
-def clear_chat():
-    chat_state["mode"] = "direct"
-    chat_state["messages"] = []
+def clear_chat(chat_id: int):
+    state = get_chat_state(chat_id)
+    state["mode"] = "direct"
+    state["messages"] = []
     return "🆕 New chat started. Ask a fresh question."
 
-def add_message(role, content):
-    chat_state["messages"].append({"role": role, "content": content})
-    if len(chat_state["messages"]) > MAX_HISTORY:
-        chat_state["messages"] = chat_state["messages"][-MAX_HISTORY:]
 
-def build_prompt(user_text: str) -> str:
+def add_message(chat_id: int, role: str, content: str):
+    state = get_chat_state(chat_id)
+    state["messages"].append({"role": role, "content": content})
+
+    if len(state["messages"]) > MAX_HISTORY:
+        state["messages"] = state["messages"][-MAX_HISTORY:]
+
+
+def build_prompt(chat_id: int, user_text: str) -> str:
+    state = get_chat_state(chat_id)
+
     history_text = ""
-    for m in chat_state["messages"]:
+    for m in state["messages"]:
         history_text += f"{m['role'].upper()}: {m['content']}\n"
 
-    mode_prompt = SOCRATIC_RULES if chat_state["mode"] == "socratic" else ""
+    mode_prompt = SOCRATIC_RULES if state["mode"] == "socratic" else ""
 
     return f"""
 {BASE_SYSTEM_PROMPT}
 {mode_prompt}
+
+The student may ask follow-up questions referring to the previous answer.
 
 Previous conversation (for context only):
 {history_text}
@@ -160,8 +168,8 @@ def extract_text(response) -> str:
                     if hasattr(part, "text") and part.text:
                         texts.append(part.text)
 
-    except Exception as e:
-        return f"⚠️ Response parsing error: {e}"
+    except Exception:
+        return "⚠️ Response parsing error. Please try again."
 
     if texts:
         seen = set()
@@ -177,27 +185,34 @@ def extract_text(response) -> str:
 # -----------------------------
 # Main entry function
 # -----------------------------
-def chat_reply(user_text: str, mode: str | None = None, reset: bool = False) -> str:
+def chat_reply(
+    chat_id: int,
+    user_text: str,
+    mode: str | None = None,
+    reset: bool = False
+) -> str:
+
     if reset:
-        return clear_chat()
+        return clear_chat(chat_id)
 
     if not user_text or not user_text.strip():
         return "Please type your question."
 
-    # Explicit mode switch
-    if mode in ("direct", "socratic"):
-        chat_state["mode"] = mode
+    state = get_chat_state(chat_id)
 
-    prompt = build_prompt(user_text)
+    if mode in ("direct", "socratic"):
+        state["mode"] = mode
+
+    prompt = build_prompt(chat_id, user_text)
 
     try:
         response = generate_with_retry(prompt)
         reply = extract_text(response)
 
-        add_message("user", user_text)
-        add_message("assistant", reply)
+        add_message(chat_id, "user", user_text)
+        add_message(chat_id, "assistant", reply)
 
         return reply
 
-    except Exception as e:
-        return f"⚠️ System busy. Please try again."
+    except Exception:
+        return "⚠️ System busy. Please try again."

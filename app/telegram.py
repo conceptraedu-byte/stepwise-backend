@@ -66,7 +66,7 @@ async def telegram_webhook(request: Request):
             )
 
         # ✅ Correct variable
-        reply = chat_reply(text)
+        reply = chat_reply(chat_id, text)
 
         await client.post(
             f"{TELEGRAM_API}/sendMessage",
