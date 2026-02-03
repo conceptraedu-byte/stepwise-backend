@@ -23,27 +23,29 @@ chat_state = {
 }
 
 # -----------------------------
-# Base system prompt
+# SYSTEM PROMPTS (UX-FIRST)
 # -----------------------------
 BASE_SYSTEM_PROMPT = """
-You are an educational assistant for CBSE Class 10 & 12 students.
+You are a CBSE Class 10 & 12 tutor.
 
-RULES:
+RULES (VERY IMPORTANT):
+- Give SHORT, exam-ready answers by default.
 - Start directly with the definition or final answer.
-- Do NOT begin with introductory or filler sentences.
-- Be concise, clear, and exam-oriented.
-- Use step-by-step explanations only after the answer.
+- Use plain text math (no LaTeX).
+- Use Unicode symbols where helpful (², −).
+- Do NOT give long explanations unless the student asks.
+- End answers with a short follow-up prompt like:
+  "Want steps or an example?"
 """
 
 SOCRATIC_RULES = """
 You are acting as a Socratic tutor.
 
-Rules:
+RULES:
 - Do NOT give the final answer.
 - Ask ONLY ONE guiding question.
-- Focus on NCERT concepts.
-- Be exam-oriented.
-- Encourage thinking, not solving.
+- Keep it simple and exam-oriented.
+- No explanations, no hints beyond one question.
 """
 
 # -----------------------------
@@ -52,7 +54,7 @@ Rules:
 def clear_chat():
     chat_state["mode"] = "direct"
     chat_state["messages"] = []
-    return "New chat started."
+    return "🆕 New chat started. Ask a fresh question."
 
 def add_message(role, content):
     chat_state["messages"].append({"role": role, "content": content})
@@ -70,10 +72,10 @@ def build_prompt(user_text: str) -> str:
 {BASE_SYSTEM_PROMPT}
 {mode_prompt}
 
-Conversation so far:
+Previous conversation (for context only):
 {history_text}
 
-USER QUESTION:
+STUDENT QUESTION:
 {user_text}
 """
 
@@ -87,7 +89,7 @@ def generate_with_retry(prompt, retries=2, delay=2):
                 model=MODEL,
                 contents=prompt,
                 config={
-                    "max_output_tokens": 700,
+                    "max_output_tokens": 600,
                     "temperature": 0.4
                 }
             )
@@ -109,11 +111,9 @@ def extract_text(response) -> str:
             if not content:
                 continue
 
-            # Case 1: content.text
             if hasattr(content, "text") and content.text:
                 texts.append(content.text)
 
-            # Case 2: content.parts[].text
             parts = getattr(content, "parts", None)
             if parts:
                 for part in parts:
@@ -122,10 +122,6 @@ def extract_text(response) -> str:
 
     except Exception as e:
         return f"⚠️ Response parsing error: {e}"
-
-    # Last fallback
-    if not texts and hasattr(response, "text") and response.text:
-        texts.append(response.text)
 
     if texts:
         seen = set()
@@ -136,7 +132,7 @@ def extract_text(response) -> str:
                 seen.add(t)
         return "\n".join(final).strip()
 
-    return "⚠️ Gemini returned an empty response."
+    return "⚠️ I couldn’t generate a response. Please try again."
 
 # -----------------------------
 # Main entry function
@@ -164,4 +160,4 @@ def chat_reply(user_text: str, mode: str | None = None, reset: bool = False) -> 
         return reply
 
     except Exception as e:
-        return f"ERROR FROM GEMINI: {str(e)}"
+        return f"⚠️ System busy. Please try again."
