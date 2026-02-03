@@ -23,6 +23,7 @@ Rules:
 - Ask ONLY ONE guiding question.
 - Focus on NCERT concepts.
 - Be exam-oriented.
+- Make sure to give proper steps
 - Encourage thinking, not solving.
 
 Student question:
