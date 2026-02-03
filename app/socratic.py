@@ -3,9 +3,7 @@ import time
 from datetime import datetime
 from google import genai
 
-
 print("🚨 APP/SOCRATIC.PY LOADED 🚨")
-
 
 # =============================
 # Gemini client
@@ -22,52 +20,35 @@ MODEL = "models/gemini-flash-latest"
 MAX_HISTORY = 8
 chat_states = {}  # chat_id -> state
 
-# =============================
-# LOGGING FILES
-# =============================
-LOG_DIR = "logs"
-os.makedirs(LOG_DIR, exist_ok=True)
-
-TRUNCATION_LOG = os.path.join(LOG_DIR, "truncated_generations.log")
-ANALYTICS_LOG = os.path.join(LOG_DIR, "topic_analytics.log")
-
-# =============================
-# Utilities
-# =============================
-def log_truncation(chat_id: int, question: str, raw_text: str):
-    with open(TRUNCATION_LOG, "a", encoding="utf-8") as f:
-        f.write(
-            f"[{datetime.now()}] chat_id={chat_id}\n"
-            f"QUESTION: {question}\n"
-            f"RAW_OUTPUT: {raw_text}\n\n"
-        )
-
-
-def log_topic_analytics(chat_id: int, state: dict):
-    with open(ANALYTICS_LOG, "a", encoding="utf-8") as f:
-        f.write(
-            f"[{datetime.now()}] chat_id={chat_id} | "
-            f"class={state.get('class')} | "
-            f"subject={state.get('subject')} | "
-            f"chapter={state.get('chapter')} | "
-            f"topic={state.get('last_topic')} | "
-            f"importance={state.get('importance')}\n"
-        )
-
 
 def get_chat_state(chat_id: int):
     if chat_id not in chat_states:
         chat_states[chat_id] = {
-            "mode": "direct",
             "messages": [],
             "class": None,
             "subject": None,
             "chapter": None,
             "last_topic": None,
             "importance": None,
-            "board": "CBSE"  # default
+            "board": "CBSE"
         }
     return chat_states[chat_id]
+
+
+# =============================
+# SAFE LOGGING (never breaks app)
+# =============================
+LOG_DIR = "logs"
+TRUNCATION_LOG = os.path.join(LOG_DIR, "truncated_generations.log")
+ANALYTICS_LOG = os.path.join(LOG_DIR, "topic_analytics.log")
+
+def safe_log(path: str, text: str):
+    try:
+        os.makedirs(LOG_DIR, exist_ok=True)
+        with open(path, "a", encoding="utf-8") as f:
+            f.write(text)
+    except Exception:
+        pass
 
 
 # =============================
@@ -109,27 +90,27 @@ SYLLABUS = {
     }
 }
 
-OFF_SYLLABUS_KEYWORDS = [
+OFF_SYLLABUS_KEYWORDS = {
     "schrodinger", "quantum", "wave function",
     "relativity", "string theory", "black hole"
-]
+}
+
 
 # =============================
 # Topic detection
 # =============================
-def detect_topic(user_text: str):
-    text = user_text.lower()
-
+def detect_topic(text: str):
+    t = text.lower()
     for cls, subjects in SYLLABUS.items():
         for subject, chapters in subjects.items():
             for chapter, data in chapters.items():
                 for topic, importance in data["topics"].items():
-                    if topic in text:
+                    if topic in t:
                         return {
                             "class": cls.replace("_", " "),
                             "subject": subject,
                             "chapter": chapter,
-                            "topic": topic,
+                            "last_topic": topic,
                             "importance": importance
                         }
     return None
@@ -141,58 +122,53 @@ def is_off_syllabus(text: str) -> bool:
 
 
 # =============================
-# Sentence completeness guard
+# Incomplete sentence guard
 # =============================
 def is_incomplete_sentence(text: str) -> bool:
-    text = text.strip().lower()
-    incomplete_endings = (
-        "of", "to", "for", "with", "that", "which",
-        "because", "and", "or"
+    bad_endings = (
+        "of", "to", "for", "with", "that",
+        "which", "because", "and", "or"
     )
-    return any(text.endswith(" " + w) or text.endswith(w) for w in incomplete_endings)
+    t = text.strip().lower()
+    return any(t.endswith(w) for w in bad_endings)
 
 
 # =============================
-# SYSTEM PROMPT (BOARD-TUNED)
+# SYSTEM PROMPT
 # =============================
 def build_system_prompt(board: str, importance: str | None):
     board_hint = (
-        "Follow strict NCERT wording." if board == "CBSE"
-        else "Use simpler language commonly used in State Board answers."
+        "Use strict NCERT wording."
+        if board == "CBSE"
+        else "Use simple State Board language."
     )
 
     importance_hint = ""
     if importance == "very_important":
-        importance_hint = "This topic is very important for board exams. Be precise."
+        importance_hint = "This topic is very important for exams."
     elif importance == "important":
-        importance_hint = "This topic is frequently asked in exams."
-    elif importance == "basic":
-        importance_hint = "Keep the explanation basic and clear."
+        importance_hint = "This topic is frequently asked."
 
     return f"""
-You are a Class 10 & 12 tutor for CBSE and State Boards.
+You are a Class 10 & 12 board exam tutor.
 
-ABSOLUTE RULES:
-- NEVER stop mid-sentence or mid-step.
-- ALWAYS complete the answer.
-- Do NOT answer out-of-syllabus questions fully.
-
-ANSWER STYLE:
+RULES:
+- Never stop mid-sentence.
+- Always complete thoughts.
 - Start directly with the answer.
-- Use short, exam-ready language.
-- Use plain-text math and Unicode (², −).
+- Plain text only. Unicode allowed (², −).
 - No LaTeX, no markdown.
 
 {board_hint}
 {importance_hint}
 
-LENGTH RULES:
-- Define / State → short (2–4 lines)
-- Explain → 5–8 short lines
-- Derive → step-wise ONLY if syllabus allows
+Length rules:
+- Define / State: 2–4 lines
+- Explain: 5–8 short lines
+- Derive: step-wise only if syllabus allows
 
-If out-of-syllabus:
-Politely state it is out of syllabus and offer a conceptual explanation.
+If out of syllabus:
+Say so clearly and offer only a basic idea.
 """
 
 
@@ -206,13 +182,8 @@ def build_prompt(chat_id: int, user_text: str) -> str:
     for m in state["messages"]:
         history += f"{m['role'].upper()}: {m['content']}\n"
 
-    system_prompt = build_system_prompt(
-        board=state["board"],
-        importance=state["importance"]
-    )
-
     return f"""
-{system_prompt}
+{build_system_prompt(state["board"], state["importance"])}
 
 Conversation context:
 {history}
@@ -223,50 +194,52 @@ STUDENT QUESTION:
 
 
 # =============================
-# Gemini call
+# Gemini call (retry-safe)
 # =============================
-def generate_response(prompt):
-    return client.models.generate_content(
-        model=MODEL,
-        contents=prompt,
-        config={
-            "max_output_tokens": 500,
-            "temperature": 0.3
-        }
-    )
+def generate_response(prompt: str):
+    for _ in range(2):
+        try:
+            return client.models.generate_content(
+                model=MODEL,
+                contents=prompt,
+                config={"max_output_tokens": 500, "temperature": 0.3}
+            )
+        except Exception:
+            time.sleep(1)
+    return None
 
 
 # =============================
-# Response extraction (SAFE)
+# Response extraction
 # =============================
 def extract_text(chat_id: int, question: str, response) -> str:
-    texts = []
+    if not response or not response.candidates:
+        return "Please try again."
 
-    for candidate in (response.candidates or []):
-        content = candidate.content
+    texts = []
+    for c in response.candidates:
+        content = c.content
         if not content:
             continue
-
-        if hasattr(content, "text") and content.text:
+        if getattr(content, "text", None):
             texts.append(content.text)
-
-        parts = getattr(content, "parts", None)
-        if parts:
-            for part in parts:
-                if hasattr(part, "text") and part.text:
-                    texts.append(part.text)
+        for p in getattr(content, "parts", []) or []:
+            if getattr(p, "text", None):
+                texts.append(p.text)
 
     if not texts:
-        return "⚠️ I couldn’t generate a response. Please try again."
+        return "Please try again."
 
     final = "\n".join(dict.fromkeys(texts)).strip()
 
     if is_incomplete_sentence(final):
-        log_truncation(chat_id, question, final)
+        safe_log(
+            TRUNCATION_LOG,
+            f"[{datetime.now()}]\nQ: {question}\nOUT: {final}\n\n"
+        )
         return (
             "This topic is outside the CBSE and State Board syllabus.\n\n"
-            "At this level, only the basic idea is expected.\n"
-            "If you want, I can explain the concept in simple terms."
+            "At this level, only a basic idea is expected."
         )
 
     if final[-1] not in ".!?":
@@ -275,48 +248,31 @@ def extract_text(chat_id: int, question: str, response) -> str:
     return final
 
 
+# =============================
+# Clear chat
+# =============================
 def clear_chat(chat_id: int) -> str:
-    state = get_chat_state(chat_id)
-    state.update({
-        "mode": "direct",
-        "messages": [],
-        "class": None,
-        "subject": None,
-        "chapter": None,
-        "last_topic": None,
-        "importance": None
-    })
+    chat_states.pop(chat_id, None)
     return "🆕 New chat started. Ask a fresh question."
 
 
-
 # =============================
-# Main entry function
+# Main entry
 # =============================
 def chat_reply(
     chat_id: int,
     user_text: str,
-    mode: str | None = None,
     reset: bool = False,
     board: str | None = None
 ) -> str:
 
-    state = get_chat_state(chat_id)
-
     if reset:
-        state.update({
-            "mode": "direct",
-            "messages": [],
-            "class": None,
-            "subject": None,
-            "chapter": None,
-            "last_topic": None,
-            "importance": None
-        })
-        return "🆕 New chat started. Ask a fresh question."
+        return clear_chat(chat_id)
 
     if not user_text or not user_text.strip():
         return "Please type your question."
+
+    state = get_chat_state(chat_id)
 
     if board in ("CBSE", "STATE"):
         state["board"] = board
@@ -324,26 +280,23 @@ def chat_reply(
     detected = detect_topic(user_text)
     if detected:
         state.update(detected)
-        log_topic_analytics(chat_id, state)
+        safe_log(
+            ANALYTICS_LOG,
+            f"[{datetime.now()}] {chat_id} {detected}\n"
+        )
 
-    if detected is None and is_off_syllabus(user_text):
+    if not detected and is_off_syllabus(user_text):
         return (
             "This topic is outside the CBSE and State Board syllabus.\n\n"
-            "At this level, only the basic idea is expected.\n"
-            "If you want, I can explain the concept in simple terms."
+            "At this level, only a basic idea is expected."
         )
 
     prompt = build_prompt(chat_id, user_text)
+    response = generate_response(prompt)
+    reply = extract_text(chat_id, user_text, response)
 
-    try:
-        response = generate_response(prompt)
-        reply = extract_text(chat_id, user_text, response)
+    state["messages"].append({"role": "user", "content": user_text})
+    state["messages"].append({"role": "assistant", "content": reply})
+    state["messages"] = state["messages"][-MAX_HISTORY:]
 
-        state["messages"].append({"role": "user", "content": user_text})
-        state["messages"].append({"role": "assistant", "content": reply})
-        state["messages"] = state["messages"][-MAX_HISTORY:]
-
-        return reply
-
-    except Exception:
-        return "⚠️ System busy. Please try again."
+    return reply
