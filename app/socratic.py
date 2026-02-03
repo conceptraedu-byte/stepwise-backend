@@ -21,7 +21,7 @@ chat_state = {
 }
 
 # -----------------------------
-# Base system prompt (ALWAYS)
+# Base system prompt
 # -----------------------------
 BASE_SYSTEM_PROMPT = """
 You are an educational assistant for CBSE Class 10 & 12 students.
@@ -72,6 +72,24 @@ USER QUESTION:
 {user_text}
 """
 
+def extract_text(response) -> str:
+    """
+    Safely extract text from Gemini response (NEW SDK compatible)
+    """
+    if hasattr(response, "text") and response.text:
+        return response.text.strip()
+
+    # Fallback: extract from candidates/parts
+    try:
+        parts = response.candidates[0].content.parts
+        texts = [p.text for p in parts if hasattr(p, "text") and p.text]
+        if texts:
+            return "\n".join(texts).strip()
+    except Exception:
+        pass
+
+    return "⚠️ I couldn’t generate a proper response. Please try again."
+
 # -----------------------------
 # Main entry function
 # -----------------------------
@@ -98,7 +116,7 @@ def chat_reply(user_text: str, mode: str | None = None, reset: bool = False) -> 
             }
         )
 
-        reply = response.text.strip()
+        reply = extract_text(response)
 
         add_message("user", user_text)
         add_message("assistant", reply)
