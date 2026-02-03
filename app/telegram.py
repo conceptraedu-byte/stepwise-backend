@@ -25,7 +25,7 @@ async def telegram_webhook(request: Request):
 
     # 🔹 Handle /clear BEFORE Gemini
     if text.lower() in ("/clear", "/reset", "/new"):
-        clear_chat()
+        clear_chat(chat_id)
         async with httpx.AsyncClient() as client:
             await client.post(
                 f"{TELEGRAM_API}/sendMessage",
