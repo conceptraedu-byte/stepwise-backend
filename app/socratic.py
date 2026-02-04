@@ -52,33 +52,58 @@ def safe_log(path: str, text: str):
 
 
 # =============================
-# QUESTION TYPE DETECTION (NEW)
+# QUESTION TYPE DETECTION (ADDED)
 # =============================
 def is_definition_question(text: str) -> bool:
-    starters = (
-        "define",
-        "state",
-        "what is",
-        "give the definition of"
-    )
     t = text.lower().strip()
-    return any(t.startswith(s) for s in starters)
+    return t.startswith(("define", "state", "what is", "give the definition of"))
 
 
 def is_procedural_question(text: str) -> bool:
     keywords = (
-        "find",
-        "calculate",
-        "solve",
-        "using euclid",
-        "hcf",
-        "lcm",
-        "prove",
-        "show that",
-        "derive"
+        "find", "calculate", "solve",
+        "using", "hcf", "lcm",
+        "prove", "show that", "derive"
     )
     t = text.lower()
     return any(k in t for k in keywords)
+
+
+def build_forced_output_format(question: str) -> str:
+    q = question.lower()
+
+    if is_definition_question(question):
+        return """
+MANDATORY OUTPUT FORMAT:
+- Write ONLY the definition.
+- One paragraph.
+- No introduction.
+- No explanation.
+- No example.
+"""
+
+    if "prove" in q or "show that" in q:
+        return """
+MANDATORY OUTPUT FORMAT:
+Step 1:
+Step 2:
+Step 3:
+Step 4:
+Conclusion:
+(No introduction sentence allowed.)
+"""
+
+    if any(k in q for k in ("hcf", "lcm", "find", "calculate")):
+        return """
+MANDATORY OUTPUT FORMAT:
+Step 1:
+Step 2:
+Step 3:
+Final Answer:
+(No introduction sentence allowed.)
+"""
+
+    return ""
 
 
 # =============================
@@ -95,7 +120,7 @@ def build_rag_context(question: str) -> str:
 
 
 # =============================
-# SYSTEM PROMPT
+# SYSTEM PROMPT (STRENGTHENED)
 # =============================
 def build_system_prompt(board: str, importance: str | None):
     board_hint = (
@@ -113,28 +138,26 @@ def build_system_prompt(board: str, importance: str | None):
     return f"""
 You are a Class 10 & 12 board exam tutor.
 
-ABSOLUTE RULES:
-- Never stop mid-sentence.
-- Never give partial answers.
-- Do not summarise when steps are required.
+ABSOLUTE RULES (NO EXCEPTIONS):
+- NEVER explain what you are going to do.
+- NEVER write introductory sentences.
+- NEVER stop mid-answer.
+- NEVER summarise instead of solving.
 - Plain text only. No markdown. No LaTeX.
 
 ANSWER DISCIPLINE:
-- Definition questions → ONLY the definition.
-- Numerical / Algorithm questions → MUST show every step.
-- Proof / Derivation → Logical steps till conclusion.
-- End numerical answers with a clear final result.
+- Definition → exact NCERT definition only.
+- Numerical / Algorithm → every step must be shown.
+- Proof / Derivation → logical steps until conclusion.
+- End numericals with a clear final answer.
 
 {board_hint}
 {importance_hint}
-
-If the question is outside syllabus:
-Say so clearly and give only a basic idea.
 """
 
 
 # =============================
-# PROMPT BUILDER
+# PROMPT BUILDER (CRITICAL FIX)
 # =============================
 def build_prompt(chat_id: int, user_text: str) -> str:
     state = get_chat_state(chat_id)
@@ -144,39 +167,15 @@ def build_prompt(chat_id: int, user_text: str) -> str:
         history += f"{m['role'].upper()}: {m['content']}\n"
 
     rag_context = build_rag_context(user_text)
-
-    definition_rule = ""
-    if is_definition_question(user_text):
-        definition_rule = """
-IMPORTANT:
-This is a definition question.
-Give ONLY the standard NCERT definition.
-Do NOT add explanation, examples, variables, or applications.
-"""
-
-    procedure_rule = ""
-    if is_procedural_question(user_text):
-        procedure_rule = """
-IMPORTANT:
-This is a procedural / numerical / derivation question.
-You MUST:
-- Write each step explicitly
-- Show all calculations or logical steps
-- Continue until a final conclusion is reached
-- Do NOT stop early or summarise
-"""
+    forced_format = build_forced_output_format(user_text)
 
     return f"""
 {build_system_prompt(state["board"], state["importance"])}
 
-{definition_rule}
-{procedure_rule}
+{forced_format}
 
 REFERENCE MATERIAL (NCERT – use only if relevant):
 {rag_context if rag_context else "No reference available."}
-
-Conversation context:
-{history}
 
 QUESTION:
 {user_text}
@@ -191,14 +190,14 @@ def generate_response(prompt: str):
         return client.models.generate_content(
             model=MODEL,
             contents=prompt,
-            config={"max_output_tokens": 600, "temperature": 0.3}
+            config={"max_output_tokens": 700, "temperature": 0.2}
         )
     except Exception:
         return None
 
 
 # =============================
-# RESPONSE EXTRACTION
+# RESPONSE EXTRACTION (SAFE)
 # =============================
 def extract_text_from_response(response) -> str | None:
     if not response or not response.candidates:
@@ -237,8 +236,10 @@ def generate_fallback_answer(question: str) -> str:
 You are a Class 10 board exam tutor.
 
 Follow NCERT exam rules strictly.
-Do not give partial answers.
-Show full steps where required.
+Show full steps.
+Do not explain intentions.
+
+{build_forced_output_format(question)}
 
 QUESTION:
 {question}
@@ -248,7 +249,7 @@ QUESTION:
         response = client.models.generate_content(
             model=MODEL,
             contents=prompt,
-            config={"max_output_tokens": 600, "temperature": 0.3}
+            config={"max_output_tokens": 700, "temperature": 0.2}
         )
     except Exception:
         return "Please ask the question clearly."
