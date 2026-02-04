@@ -234,10 +234,7 @@ def generate_response(prompt: str):
 # =============================
 def extract_text(chat_id: int, question: str, response) -> str:
     if not response or not response.candidates:
-        return (
-    "Let’s answer this step by step based on the syllabus level.\n\n"
-    "Here is a clear explanation:"
-)
+        return generate_fallback_answer(question)
 
     texts = []
     for c in response.candidates:
@@ -251,10 +248,7 @@ def extract_text(chat_id: int, question: str, response) -> str:
                 texts.append(p.text)
 
     if not texts:
-        return (
-    "Let’s answer this step by step based on the syllabus level.\n\n"
-    "Here is a clear explanation:"
-)
+        return generate_fallback_answer(question)
 
     final = "\n".join(dict.fromkeys(texts)).strip()
 
@@ -272,6 +266,30 @@ def extract_text(chat_id: int, question: str, response) -> str:
         final += "."
 
     return final
+
+
+#===========
+# fallback answers
+#============
+
+def generate_fallback_answer(question: str) -> str:
+    prompt = f"""
+You are a Class 10 board exam tutor.
+
+Answer the following question step by step.
+Use simple language.
+Follow NCERT style.
+Do not skip steps.
+
+QUESTION:
+{question}
+"""
+
+    response = generate_response(prompt)
+    if not response:
+        return "Please rephrase the question."
+
+    return extract_raw_text(response)
 
 
 # =============================
