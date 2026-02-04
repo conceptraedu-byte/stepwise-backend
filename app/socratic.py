@@ -151,21 +151,24 @@ def extract_text_from_response(response) -> str | None:
     if not response or not response.candidates:
         return None
 
-    texts = []
+    parts = []
+
     for c in response.candidates:
         content = c.content
         if not content:
             continue
-        if getattr(content, "text", None):
-            texts.append(content.text)
-        for p in getattr(content, "parts", []) or []:
-            if getattr(p, "text", None):
-                texts.append(p.text)
 
-    if not texts:
+        if hasattr(content, "parts") and content.parts:
+            for p in content.parts:
+                if getattr(p, "text", None):
+                    parts.append(p.text)
+        elif getattr(content, "text", None):
+            parts.append(content.text)
+
+    if not parts:
         return None
 
-    final = "\n".join(dict.fromkeys(texts)).strip()
+    final = "".join(parts).strip()
 
     if final and final[-1] not in ".!?":
         final += "."
