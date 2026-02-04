@@ -211,7 +211,6 @@ Conversation context:
 STUDENT QUESTION:
 {user_text}
 """
-"
 
 
 # =============================
