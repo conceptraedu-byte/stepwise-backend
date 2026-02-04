@@ -2,6 +2,7 @@ import os
 import time
 from datetime import datetime
 from google import genai
+from app.rag.retriever import retrieve
 
 print("🚨 APP/SOCRATIC.PY LOADED 🚨")
 
@@ -133,6 +134,20 @@ def is_incomplete_sentence(text: str) -> bool:
     return any(t.endswith(w) for w in bad_endings)
 
 
+def build_rag_context(question: str) -> str:
+    try:
+        chunks = retrieve(question, top_k=3)
+        if not chunks:
+            return ""
+
+        context = "\n\n".join(
+            f"- {c['text']}" for c in chunks
+        )
+        return context
+    except Exception:
+        return ""
+
+
 # =============================
 # SYSTEM PROMPT
 # =============================
@@ -182,8 +197,13 @@ def build_prompt(chat_id: int, user_text: str) -> str:
     for m in state["messages"]:
         history += f"{m['role'].upper()}: {m['content']}\n"
 
+    rag_context = build_rag_context(user_text)
+
     return f"""
 {build_system_prompt(state["board"], state["importance"])}
+
+REFERENCE MATERIAL (NCERT – use if relevant):
+{rag_context if rag_context else "No reference available."}
 
 Conversation context:
 {history}
@@ -191,6 +211,7 @@ Conversation context:
 STUDENT QUESTION:
 {user_text}
 """
+"
 
 
 # =============================
@@ -214,7 +235,10 @@ def generate_response(prompt: str):
 # =============================
 def extract_text(chat_id: int, question: str, response) -> str:
     if not response or not response.candidates:
-        return "Please try again."
+        return (
+    "Let’s answer this step by step based on the syllabus level.\n\n"
+    "Here is a clear explanation:"
+)
 
     texts = []
     for c in response.candidates:
@@ -228,7 +252,10 @@ def extract_text(chat_id: int, question: str, response) -> str:
                 texts.append(p.text)
 
     if not texts:
-        return "Please try again."
+        return (
+    "Let’s answer this step by step based on the syllabus level.\n\n"
+    "Here is a clear explanation:"
+)
 
     final = "\n".join(dict.fromkeys(texts)).strip()
 
