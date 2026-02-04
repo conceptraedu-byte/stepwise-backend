@@ -2,7 +2,8 @@ fastapi
 uvicorn
 httpx
 python-dotenv
-
+numpy
+faiss-cpu
 motor==3.4.0
 pymongo==4.7.2
 dnspython==2.6.1
