@@ -1,6 +1,4 @@
 import os
-import time
-from datetime import datetime
 from google import genai
 from app.rag.retriever import retrieve
 
@@ -16,57 +14,34 @@ client = genai.Client(
 MODEL = "models/gemini-flash-latest"
 
 # =============================
-# Per-user conversation state
+# Conversation state
 # =============================
 MAX_HISTORY = 8
-chat_states = {}  # chat_id -> state
+chat_states = {}
 
 
 def get_chat_state(chat_id: int):
     if chat_id not in chat_states:
         chat_states[chat_id] = {
             "messages": [],
-            "class": None,
-            "subject": None,
-            "chapter": None,
-            "last_topic": None,
-            "importance": None,
-            "board": "CBSE"
+            "board": "CBSE",
+
+            # Tutor state
+            "mode": None,          # normal | proof | numerical
+            "step": 0,
+            "active_question": None,
+            "hint_level": 0        # NEW
         }
     return chat_states[chat_id]
 
 
 # =============================
-# SAFE LOGGING
-# =============================
-LOG_DIR = "logs"
-TRUNCATION_LOG = os.path.join(LOG_DIR, "truncated_generations.log")
-
-def safe_log(path: str, text: str):
-    try:
-        os.makedirs(LOG_DIR, exist_ok=True)
-        with open(path, "a", encoding="utf-8") as f:
-            f.write(text)
-    except Exception:
-        pass
-
-
-# =============================
-# QUESTION TYPE DETECTION (ADDED)
+# Question classification
 # =============================
 def is_definition_question(text: str) -> bool:
-    t = text.lower().strip()
-    return t.startswith(("define", "state", "what is", "give the definition of"))
-
-
-def is_procedural_question(text: str) -> bool:
-    keywords = (
-        "find", "calculate", "solve",
-        "using", "hcf", "lcm",
-        "prove", "show that", "derive"
+    return text.lower().startswith(
+        ("define", "state", "what is", "give the definition of")
     )
-    t = text.lower()
-    return any(k in t for k in keywords)
 
 
 def is_proof_question(text: str) -> bool:
@@ -74,198 +49,141 @@ def is_proof_question(text: str) -> bool:
     return t.startswith("prove") or "prove that" in t
 
 
-
-def build_forced_output_format(question: str) -> str:
-    q = question.lower()
-
-    if is_definition_question(question):
-        return """
-MANDATORY OUTPUT FORMAT:
-- Write ONLY the definition.
-- One paragraph.
-- No introduction.
-- No explanation.
-- No example.
-"""
-
-    if "prove" in q or "show that" in q:
-        return """
-MANDATORY OUTPUT FORMAT:
-Step 1: State the assumption clearly.
-Step 2: Express the assumption in mathematical form.
-Step 3: Apply known theorems or properties.
-Step 4: Reach a contradiction.
-Conclusion: State why the assumption is false.
-(No introduction. No explanation outside steps.)
-"""
-
-    if any(k in q for k in ("hcf", "lcm", "find", "calculate", "prove")):
-        return """
-MANDATORY OUTPUT FORMAT:
-Step 1:
-Step 2:
-Step 3:
-Final Answer:
-(No introduction sentence allowed.)
-"""
-
-    return ""
+def is_numerical_question(text: str) -> bool:
+    return any(k in text.lower() for k in (
+        "find", "calculate", "solve", "hcf", "lcm", "using"
+    ))
 
 
-# =============================
-# RAG CONTEXT
-# =============================
-def build_rag_context(question: str) -> str:
-    try:
-        chunks = retrieve(question, top_k=3)
-        if not chunks:
-            return ""
-        return "\n\n".join(f"- {c['text']}" for c in chunks)
-    except Exception:
-        return ""
-
-
-# =============================
-# SYSTEM PROMPT (STRENGTHENED)
-# =============================
-def build_system_prompt(board: str, importance: str | None):
-    board_hint = (
-        "Use strict NCERT wording."
-        if board == "CBSE"
-        else "Use simple State Board language."
+def is_uncertain_answer(text: str) -> bool:
+    return text.strip().lower() in (
+        "idk", "i don't know", "dont know", "?", "no idea", "skip"
     )
 
-    importance_hint = ""
-    if importance == "very_important":
-        importance_hint = "This topic is very important for exams."
-    elif importance == "important":
-        importance_hint = "This topic is frequently asked."
 
+# =============================
+# Tutor flows
+# =============================
+PROOF_STEPS = [
+    "What is the definition of a rational number?",
+    "Assume the given number is rational. How can you write it in the form a/b?",
+    "What condition can we assume about a and b?",
+    "Square both sides. What equation do you get?",
+    "What can you say about the parity of a?",
+    "What does this imply about b?",
+    "What contradiction do you observe?",
+    "What is the final conclusion?"
+]
+
+PROOF_HINTS = [
+    ["Think about numbers that can be written as p/q."],
+    ["Use integers a and b, with no common factors."],
+    ["They should have no common factor other than 1."],
+    ["Square √2 = a/b."],
+    ["If a² is even, what about a?" ],
+    ["If a is even, what about b?" ],
+    ["This violates an earlier assumption."],
+    ["State clearly what is proved."]
+]
+
+NUMERICAL_STEPS = [
+    "Which of the given numbers is larger?",
+    "Apply Euclid’s division lemma to the larger number.",
+    "Is the remainder zero? If not, repeat the process.",
+    "Continue until the remainder becomes zero.",
+    "Which number is the HCF?"
+]
+
+NUMERICAL_HINTS = [
+    ["Compare the numbers directly."],
+    ["Write it in the form a = bq + r."],
+    ["Check whether r = 0."],
+    ["Repeat with the divisor and remainder."],
+    ["The last non-zero divisor is the answer."]
+]
+
+
+# =============================
+# Socratic engine
+# =============================
+def handle_socratic(state, user_text, steps, hints):
+    step = state["step"]
+
+    # Start
+    if step == 0:
+        state["step"] = 1
+        state["hint_level"] = 0
+        return (
+            "Let us solve this step by step.\n\n"
+            f"Step 1:\n{steps[0]}"
+        )
+
+    # Handle uncertainty
+    if is_uncertain_answer(user_text):
+        hint = hints[step - 1][min(state["hint_level"], len(hints[step - 1]) - 1)]
+        state["hint_level"] += 1
+        return f"Hint:\n{hint}"
+
+    # Advance
+    if step < len(steps):
+        state["step"] += 1
+        state["hint_level"] = 0
+        return (
+            "Good.\n\n"
+            f"Step {state['step']}:\n{steps[step]}"
+        )
+
+    # Completion
+    state["mode"] = None
+    state["step"] = 0
+    state["hint_level"] = 0
+    state["active_question"] = None
+
+    return (
+        "Correct.\n\n"
+        "You have completed all the steps.\n"
+        "Now state the final answer clearly."
+    )
+
+
+# =============================
+# Normal prompt (definitions / theory)
+# =============================
+def build_prompt(board: str, question: str) -> str:
     return f"""
 You are a Class 10 & 12 board exam tutor.
-
-ABSOLUTE RULES (NO EXCEPTIONS):
-- NEVER explain what you are going to do.
-- NEVER write introductory sentences.
-- NEVER stop mid-answer.
-- NEVER summarise instead of solving.
-- Plain text only. No markdown. No LaTeX.
-
-ANSWER DISCIPLINE:
-- Definition → exact NCERT definition only.
-- Numerical / Algorithm → every step must be shown.
-- Proof / Derivation → logical steps until conclusion.
-- End numericals with a clear final answer.
-
-{board_hint}
-{importance_hint}
-"""
-
-
-# =============================
-# PROMPT BUILDER (CRITICAL FIX)
-# =============================
-def build_prompt(chat_id: int, user_text: str) -> str:
-    state = get_chat_state(chat_id)
-
-    history = ""
-    for m in state["messages"]:
-        history += f"{m['role'].upper()}: {m['content']}\n"
-
-    rag_context = build_rag_context(user_text)
-    forced_format = build_forced_output_format(user_text)
-
-    return f"""
-{build_system_prompt(state["board"], state["importance"])}
-
-{forced_format}
-
-REFERENCE MATERIAL (NCERT – use only if relevant):
-{rag_context if rag_context else "No reference available."}
-
-QUESTION:
-{user_text}
-"""
-
-
-# =============================
-# GEMINI CALL
-# =============================
-def generate_response(prompt: str):
-    try:
-        return client.models.generate_content(
-            model=MODEL,
-            contents=prompt,
-            config={"max_output_tokens": 700, "temperature": 0.2}
-        )
-    except Exception:
-        return None
-
-
-# =============================
-# RESPONSE EXTRACTION (SAFE)
-# =============================
-def extract_text_from_response(response) -> str | None:
-    if not response or not response.candidates:
-        return None
-
-    parts = []
-
-    for c in response.candidates:
-        content = c.content
-        if not content:
-            continue
-
-        if hasattr(content, "parts") and content.parts:
-            for p in content.parts:
-                if getattr(p, "text", None):
-                    parts.append(p.text)
-        elif getattr(content, "text", None):
-            parts.append(content.text)
-
-    if not parts:
-        return None
-
-    final = "".join(parts).strip()
-
-    if final and final[-1] not in ".!?":
-        final += "."
-
-    return final
-
-
-# =============================
-# FALLBACK (ALIGNED)
-# =============================
-def generate_fallback_answer(question: str) -> str:
-    prompt = f"""
-You are a Class 10 board exam tutor.
-
-Follow NCERT exam rules strictly.
-Show full steps.
-Do not explain intentions.
-
-{build_forced_output_format(question)}
+Use strict NCERT wording.
+Answer clearly and concisely.
 
 QUESTION:
 {question}
 """
 
+
+def generate_response(prompt: str):
     try:
-        response = client.models.generate_content(
+        return client.models.generate_content(
             model=MODEL,
             contents=prompt,
-            config={"max_output_tokens": 700, "temperature": 0.2}
+            config={"max_output_tokens": 300, "temperature": 0.3}
         )
     except Exception:
-        return "Please ask the question clearly."
+        return None
 
-    text = extract_text_from_response(response)
-    return text if text else "Please ask the question clearly."
+
+def extract_text(response):
+    if not response or not response.candidates:
+        return None
+    parts = []
+    for c in response.candidates:
+        for p in getattr(c.content, "parts", []):
+            if getattr(p, "text", None):
+                parts.append(p.text)
+    return "".join(parts).strip() if parts else None
 
 
 # =============================
-# CLEAR CHAT
+# Clear chat
 # =============================
 def clear_chat(chat_id: int) -> str:
     chat_states.pop(chat_id, None)
@@ -273,36 +191,48 @@ def clear_chat(chat_id: int) -> str:
 
 
 # =============================
-# MAIN ENTRY
+# Main entry
 # =============================
-def chat_reply(
-    chat_id: int,
-    user_text: str,
-    reset: bool = False,
-    board: str | None = None
-) -> str:
+def chat_reply(chat_id: int, user_text: str, reset=False, board=None) -> str:
 
     if reset:
         return clear_chat(chat_id)
 
-    if not user_text or not user_text.strip():
-        return "Please type your question."
+    if not user_text.strip():
+        return "Please type your answer or question."
 
     state = get_chat_state(chat_id)
 
-    if board in ("CBSE", "STATE"):
+    if board:
         state["board"] = board
 
-    prompt = build_prompt(chat_id, user_text)
-    response = generate_response(prompt)
+    # Ongoing Socratic modes
+    if state["mode"] == "proof":
+        reply = handle_socratic(state, user_text, PROOF_STEPS, PROOF_HINTS)
 
-    answer = extract_text_from_response(response)
+    elif state["mode"] == "numerical":
+        reply = handle_socratic(state, user_text, NUMERICAL_STEPS, NUMERICAL_HINTS)
 
-    if not answer:
-        answer = generate_fallback_answer(user_text)
+    # New question detection
+    elif is_proof_question(user_text):
+        state["mode"] = "proof"
+        state["step"] = 0
+        state["active_question"] = user_text
+        reply = handle_socratic(state, user_text, PROOF_STEPS, PROOF_HINTS)
+
+    elif is_numerical_question(user_text):
+        state["mode"] = "numerical"
+        state["step"] = 0
+        state["active_question"] = user_text
+        reply = handle_socratic(state, user_text, NUMERICAL_STEPS, NUMERICAL_HINTS)
+
+    else:
+        prompt = build_prompt(state["board"], user_text)
+        response = generate_response(prompt)
+        reply = extract_text(response) or "Please try again."
 
     state["messages"].append({"role": "user", "content": user_text})
-    state["messages"].append({"role": "assistant", "content": answer})
+    state["messages"].append({"role": "assistant", "content": reply})
     state["messages"] = state["messages"][-MAX_HISTORY:]
 
-    return answer
+    return reply
