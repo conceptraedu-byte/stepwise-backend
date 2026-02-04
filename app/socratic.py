@@ -19,13 +19,17 @@ MODEL = "models/gemini-flash-latest"
 # Per-user conversation state
 # =============================
 MAX_HISTORY = 8
-chat_states = {}
+chat_states = {}  # chat_id -> state
 
 
 def get_chat_state(chat_id: int):
     if chat_id not in chat_states:
         chat_states[chat_id] = {
             "messages": [],
+            "class": None,
+            "subject": None,
+            "chapter": None,
+            "last_topic": None,
             "importance": None,
             "board": "CBSE"
         }
@@ -61,32 +65,47 @@ def build_rag_context(question: str) -> str:
 
 
 # =============================
-# SYSTEM PROMPT
+# SYSTEM PROMPT (IMPROVED)
 # =============================
 def build_system_prompt(board: str, importance: str | None):
+    board_hint = (
+        "Use strict NCERT wording."
+        if board == "CBSE"
+        else "Use simple State Board language."
+    )
+
+    importance_hint = ""
+    if importance == "very_important":
+        importance_hint = "This topic is very important for exams."
+    elif importance == "important":
+        importance_hint = "This topic is frequently asked."
+
     return f"""
 You are a Class 10 & 12 board exam tutor.
 
-RULES (STRICT):
+RULES:
 - Start directly with the answer.
 - Never stop mid-sentence.
-- Use NCERT wording.
+- Use clear, exam-oriented language.
 - Plain text only. No markdown. No LaTeX.
-- Be exam-oriented.
+- Be concise but complete.
 
-ANSWER STYLE:
-- Definition: 2–4 lines
-- Numerical / Algorithm: Step-wise
-- Proof: Logical steps only
-- Use symbols only if required
+ANSWER STRUCTURE:
+- Define / State: 2–4 lines
+- Numerical / Algorithm: Step-wise method
+- Proof / Derivation: Logical steps only
+- Add an example ONLY if it improves clarity
+
+{board_hint}
+{importance_hint}
 
 If the question is outside syllabus:
-Clearly say so and give only a basic idea.
+Say so clearly and give only a basic idea.
 """
 
 
 # =============================
-# PROMPT BUILDER
+# PROMPT BUILDER (ENHANCED)
 # =============================
 def build_prompt(chat_id: int, user_text: str) -> str:
     state = get_chat_state(chat_id)
@@ -126,7 +145,7 @@ def generate_response(prompt: str):
 
 
 # =============================
-# TEXT EXTRACTION
+# RESPONSE EXTRACTION
 # =============================
 def extract_text_from_response(response) -> str | None:
     if not response or not response.candidates:
@@ -147,13 +166,15 @@ def extract_text_from_response(response) -> str | None:
         return None
 
     final = "\n".join(dict.fromkeys(texts)).strip()
+
     if final and final[-1] not in ".!?":
         final += "."
+
     return final
 
 
 # =============================
-# FALLBACK (DIRECT GEMINI)
+# FALLBACK (FIXED – NO RECURSION)
 # =============================
 def generate_fallback_answer(question: str) -> str:
     prompt = f"""
@@ -162,11 +183,12 @@ You are a Class 10 board exam tutor.
 Answer the question clearly and step by step.
 Use NCERT language.
 Do not skip steps.
-Do not add extra theory.
+Do not add unnecessary theory.
 
 QUESTION:
 {question}
 """
+
     try:
         response = client.models.generate_content(
             model=MODEL,
@@ -181,7 +203,15 @@ QUESTION:
 
 
 # =============================
-# MAIN CHAT ENTRY
+# CLEAR CHAT (RESTORED)
+# =============================
+def clear_chat(chat_id: int) -> str:
+    chat_states.pop(chat_id, None)
+    return "🆕 New chat started. Ask a fresh question."
+
+
+# =============================
+# MAIN ENTRY
 # =============================
 def chat_reply(
     chat_id: int,
@@ -191,8 +221,7 @@ def chat_reply(
 ) -> str:
 
     if reset:
-        chat_states.pop(chat_id, None)
-        return "🆕 New chat started. Ask a fresh question."
+        return clear_chat(chat_id)
 
     if not user_text or not user_text.strip():
         return "Please type your question."
@@ -206,6 +235,7 @@ def chat_reply(
     response = generate_response(prompt)
 
     answer = extract_text_from_response(response)
+
     if not answer:
         answer = generate_fallback_answer(user_text)
 
