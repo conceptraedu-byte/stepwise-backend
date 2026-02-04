@@ -52,6 +52,36 @@ def safe_log(path: str, text: str):
 
 
 # =============================
+# QUESTION TYPE DETECTION (NEW)
+# =============================
+def is_definition_question(text: str) -> bool:
+    starters = (
+        "define",
+        "state",
+        "what is",
+        "give the definition of"
+    )
+    t = text.lower().strip()
+    return any(t.startswith(s) for s in starters)
+
+
+def is_procedural_question(text: str) -> bool:
+    keywords = (
+        "find",
+        "calculate",
+        "solve",
+        "using euclid",
+        "hcf",
+        "lcm",
+        "prove",
+        "show that",
+        "derive"
+    )
+    t = text.lower()
+    return any(k in t for k in keywords)
+
+
+# =============================
 # RAG CONTEXT
 # =============================
 def build_rag_context(question: str) -> str:
@@ -65,7 +95,7 @@ def build_rag_context(question: str) -> str:
 
 
 # =============================
-# SYSTEM PROMPT (IMPROVED)
+# SYSTEM PROMPT
 # =============================
 def build_system_prompt(board: str, importance: str | None):
     board_hint = (
@@ -83,18 +113,17 @@ def build_system_prompt(board: str, importance: str | None):
     return f"""
 You are a Class 10 & 12 board exam tutor.
 
-RULES:
-- Start directly with the answer.
+ABSOLUTE RULES:
 - Never stop mid-sentence.
-- Use clear, exam-oriented language.
+- Never give partial answers.
+- Do not summarise when steps are required.
 - Plain text only. No markdown. No LaTeX.
-- Be concise but complete.
 
-ANSWER STRUCTURE:
-- Define / State: 2–4 lines
-- Numerical / Algorithm: Step-wise method
-- Proof / Derivation: Logical steps only
-- Add an example ONLY if it improves clarity
+ANSWER DISCIPLINE:
+- Definition questions → ONLY the definition.
+- Numerical / Algorithm questions → MUST show every step.
+- Proof / Derivation → Logical steps till conclusion.
+- End numerical answers with a clear final result.
 
 {board_hint}
 {importance_hint}
@@ -105,7 +134,7 @@ Say so clearly and give only a basic idea.
 
 
 # =============================
-# PROMPT BUILDER (ENHANCED)
+# PROMPT BUILDER
 # =============================
 def build_prompt(chat_id: int, user_text: str) -> str:
     state = get_chat_state(chat_id)
@@ -116,8 +145,32 @@ def build_prompt(chat_id: int, user_text: str) -> str:
 
     rag_context = build_rag_context(user_text)
 
+    definition_rule = ""
+    if is_definition_question(user_text):
+        definition_rule = """
+IMPORTANT:
+This is a definition question.
+Give ONLY the standard NCERT definition.
+Do NOT add explanation, examples, variables, or applications.
+"""
+
+    procedure_rule = ""
+    if is_procedural_question(user_text):
+        procedure_rule = """
+IMPORTANT:
+This is a procedural / numerical / derivation question.
+You MUST:
+- Write each step explicitly
+- Show all calculations or logical steps
+- Continue until a final conclusion is reached
+- Do NOT stop early or summarise
+"""
+
     return f"""
 {build_system_prompt(state["board"], state["importance"])}
+
+{definition_rule}
+{procedure_rule}
 
 REFERENCE MATERIAL (NCERT – use only if relevant):
 {rag_context if rag_context else "No reference available."}
@@ -131,14 +184,14 @@ QUESTION:
 
 
 # =============================
-# GEMINI CALL (PRIMARY)
+# GEMINI CALL
 # =============================
 def generate_response(prompt: str):
     try:
         return client.models.generate_content(
             model=MODEL,
             contents=prompt,
-            config={"max_output_tokens": 500, "temperature": 0.3}
+            config={"max_output_tokens": 600, "temperature": 0.3}
         )
     except Exception:
         return None
@@ -177,16 +230,15 @@ def extract_text_from_response(response) -> str | None:
 
 
 # =============================
-# FALLBACK (FIXED – NO RECURSION)
+# FALLBACK (ALIGNED)
 # =============================
 def generate_fallback_answer(question: str) -> str:
     prompt = f"""
 You are a Class 10 board exam tutor.
 
-Answer the question clearly and step by step.
-Use NCERT language.
-Do not skip steps.
-Do not add unnecessary theory.
+Follow NCERT exam rules strictly.
+Do not give partial answers.
+Show full steps where required.
 
 QUESTION:
 {question}
@@ -196,7 +248,7 @@ QUESTION:
         response = client.models.generate_content(
             model=MODEL,
             contents=prompt,
-            config={"max_output_tokens": 500, "temperature": 0.3}
+            config={"max_output_tokens": 600, "temperature": 0.3}
         )
     except Exception:
         return "Please ask the question clearly."
@@ -206,7 +258,7 @@ QUESTION:
 
 
 # =============================
-# CLEAR CHAT (RESTORED)
+# CLEAR CHAT
 # =============================
 def clear_chat(chat_id: int) -> str:
     chat_states.pop(chat_id, None)
