@@ -69,6 +69,12 @@ def is_procedural_question(text: str) -> bool:
     return any(k in t for k in keywords)
 
 
+def is_proof_question(text: str) -> bool:
+    t = text.lower()
+    return t.startswith("prove") or "prove that" in t
+
+
+
 def build_forced_output_format(question: str) -> str:
     q = question.lower()
 
@@ -85,15 +91,15 @@ MANDATORY OUTPUT FORMAT:
     if "prove" in q or "show that" in q:
         return """
 MANDATORY OUTPUT FORMAT:
-Step 1:
-Step 2:
-Step 3:
-Step 4:
-Conclusion:
-(No introduction sentence allowed.)
+Step 1: State the assumption clearly.
+Step 2: Express the assumption in mathematical form.
+Step 3: Apply known theorems or properties.
+Step 4: Reach a contradiction.
+Conclusion: State why the assumption is false.
+(No introduction. No explanation outside steps.)
 """
 
-    if any(k in q for k in ("hcf", "lcm", "find", "calculate")):
+    if any(k in q for k in ("hcf", "lcm", "find", "calculate", "prove")):
         return """
 MANDATORY OUTPUT FORMAT:
 Step 1:
