@@ -2,7 +2,7 @@ from pathlib import Path
 import json
 import faiss
 import numpy as np
-from google import genai
+import google.generativeai as genai
 from dotenv import load_dotenv
 import os
 
@@ -16,7 +16,10 @@ api_key = os.getenv("GEMINI_API_KEY")
 if not api_key:
     raise RuntimeError("GEMINI_API_KEY not found")
 
-client = genai.Client(api_key=api_key)
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+
+EMBED_MODEL = "models/text-embedding-004"
+
 
 # -----------------------------
 # PATHS
@@ -35,13 +38,17 @@ with open(META_PATH, "r", encoding="utf-8") as f:
 # -----------------------------
 # EMBED QUERY
 # -----------------------------
-def embed_query(text: str):
-    response = client.models.embed_content(
-        model="models/text-embedding-004",
-        contents=[text]
-    )
-    vec = response.embeddings[0].values
-    return np.array([vec], dtype="float32")
+def embed_texts(texts: list[str]):
+    embeddings = []
+
+    for text in texts:
+        result = genai.embed_content(
+            model=EMBED_MODEL,
+            content=text
+        )
+        embeddings.append(result["embedding"])
+
+    return embeddings
 
 # -----------------------------
 # RETRIEVE

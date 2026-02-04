@@ -1,5 +1,5 @@
 import os
-from google import genai
+import google.generativeai as genai
 from app.rag.retriever import retrieve
 
 print("🚨 APP/SOCRATIC.PY LOADED 🚨")
@@ -7,11 +7,11 @@ print("🚨 APP/SOCRATIC.PY LOADED 🚨")
 # =============================
 # Gemini client
 # =============================
-client = genai.Client(
-    api_key=os.getenv("GEMINI_API_KEY")
-)
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
-MODEL = "models/gemini-flash-latest"
+
+MODEL_NAME = "gemini-1.5-flash"
+model = genai.GenerativeModel(MODEL_NAME)
 
 # =============================
 # Conversation state
@@ -162,13 +162,10 @@ QUESTION:
 
 def generate_response(prompt: str):
     try:
-        return client.models.generate_content(
-            model=MODEL,
-            contents=prompt,
-            config={"max_output_tokens": 300, "temperature": 0.3}
-        )
+        return model.generate_content(prompt)
     except Exception:
         return None
+
 
 
 def extract_text(response):
