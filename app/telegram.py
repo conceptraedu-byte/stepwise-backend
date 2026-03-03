@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Request
-from app.socratic import chat_reply, clear_chat
+from app.socratic import chat_reply
 from app import db
 import httpx
 import os
@@ -7,7 +7,7 @@ import os
 router = APIRouter()
 
 TELEGRAM_API = f"https://api.telegram.org/bot{os.getenv('TELEGRAM_BOT_TOKEN')}"
-FREE_LIMIT = 200
+FREE_LIMIT = 500
 
 
 @router.post("/webhook")

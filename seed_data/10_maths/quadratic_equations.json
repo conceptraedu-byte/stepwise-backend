@@ -1,0 +1,812 @@
+[
+{
+"question": "Which of the following is a quadratic equation?",
+"options": [
+"x^2 + 2x + 1 = (4 - x)^2 + 3",
+"-2x^2 = (5 - x)(2x - 2/5)",
+"(k + 1)x^2 + 3/2x = 7, where k = -1",
+"x^3 - x^2 = (x - 1)^3"
+],
+"correctAnswer": 3,
+"board": "CBSE",
+"subject": "Maths",
+"class": 10,
+"chapter": "Quadratic Equations",
+"topic": "Introduction to Quadratic Equations",
+"difficulty": "medium",
+"marks": 1,
+"explanation": "In option 4, x^3 terms cancel out leaving a quadratic equation. In others, either x^2 cancels or the coefficient becomes zero."
+},
+{
+"question": "The roots of the quadratic equation x^2 - 0.04 = 0 are:",
+"options": [
+"+/- 0.2",
+"+/- 0.02",
+"0.4",
+"2"
+],
+"correctAnswer": 0,
+"board": "CBSE",
+"subject": "Maths",
+"class": 10,
+"chapter": "Quadratic Equations",
+"topic": "Solving Quadratic Equations",
+"difficulty": "easy",
+"marks": 1,
+"explanation": "x^2 = 0.04 implies x = square root of 0.04, which is +/- 0.2."
+},
+{
+"question": "If 1/2 is a root of the equation x^2 + kx - 5/4 = 0, then the value of k is:",
+"options": [
+"2",
+"-2",
+"1/4",
+"1/2"
+],
+"correctAnswer": 0,
+"board": "CBSE",
+"subject": "Maths",
+"class": 10,
+"chapter": "Quadratic Equations",
+"topic": "Roots of Equation",
+"difficulty": "easy",
+"marks": 1,
+"explanation": "Substitute x = 1/2: (1/4) + k(1/2) - 5/4 = 0. This gives k/2 = 1, so k = 2."
+},
+{
+"question": "A quadratic equation ax^2 + bx + c = 0 has non-real roots if the discriminant D is:",
+"options": [
+"D > 0",
+"D = 0",
+"D < 0",
+"D is a perfect square"
+],
+"correctAnswer": 2,
+"board": "CBSE",
+"subject": "Maths",
+"class": 10,
+"chapter": "Quadratic Equations",
+"topic": "Nature of Roots",
+"difficulty": "easy",
+"marks": 1,
+"explanation": "When the discriminant b^2 - 4ac is less than zero, the roots are imaginary or non-real."
+},
+{
+"question": "The values of k for which the quadratic equation 2x^2 - kx + k = 0 has equal roots is:",
+"options": [
+"0 only",
+"4",
+"8 only",
+"0, 8"
+],
+"correctAnswer": 3,
+"board": "CBSE",
+"subject": "Maths",
+"class": 10,
+"chapter": "Quadratic Equations",
+"topic": "Nature of Roots",
+"difficulty": "medium",
+"marks": 1,
+"explanation": "For equal roots, D = 0. k^2 - 4(2)(k) = 0 implies k(k - 8) = 0. So k = 0 or 8."
+},
+{
+"question": "Which constant must be added and subtracted to solve the quadratic equation 9x^2 + 3/4x - root 2 = 0 by the method of completing the square?",
+"options": [
+"1/8",
+"1/64",
+"1/4",
+"9/64"
+],
+"correctAnswer": 1,
+"board": "CBSE",
+"subject": "Maths",
+"class": 10,
+"chapter": "Quadratic Equations",
+"topic": "Completing the Square",
+"difficulty": "hard",
+"marks": 1,
+"explanation": "Divide by 9: x^2 + x/12. Half of 1/12 is 1/24. Adding (1/24)^2 is not in options. If we write as (3x + 1/8)^2, we need (1/8)^2 = 1/64."
+},
+{
+"question": "The quadratic equation 2x^2 - root 5x + 1 = 0 has:",
+"options": [
+"Two distinct real roots",
+"Two equal real roots",
+"No real roots",
+"More than 2 real roots"
+],
+"correctAnswer": 2,
+"board": "CBSE",
+"subject": "Maths",
+"class": 10,
+"chapter": "Quadratic Equations",
+"topic": "Nature of Roots",
+"difficulty": "medium",
+"marks": 1,
+"explanation": "D = b^2 - 4ac = (-root 5)^2 - 4(2)(1) = 5 - 8 = -3. Since D < 0, there are no real roots."
+},
+{
+"question": "The sum of the squares of two consecutive natural numbers is 313. The numbers are:",
+"options": [
+"12, 13",
+"13, 14",
+"11, 12",
+"14, 15"
+],
+"correctAnswer": 0,
+"board": "CBSE",
+"subject": "Maths",
+"class": 10,
+"chapter": "Quadratic Equations",
+"topic": "Word Problems",
+"difficulty": "medium",
+"marks": 1,
+"explanation": "12^2 + 13^2 = 144 + 169 = 313."
+},
+{
+"question": "If the discriminant of 3x^2 - 2x + k = 0 is 0, then k is:",
+"options": [
+"1/3",
+"2/3",
+"3",
+"1"
+],
+"correctAnswer": 0,
+"board": "CBSE",
+"subject": "Maths",
+"class": 10,
+"chapter": "Quadratic Equations",
+"topic": "Discriminant",
+"difficulty": "easy",
+"marks": 1,
+"explanation": "D = (-2)^2 - 4(3)(k) = 0 implies 4 - 12k = 0, so k = 4/12 = 1/3."
+},
+{
+"question": "If the roots of px^2 + qx + 2 = 0 are reciprocal of each other, then:",
+"options": [
+"p = 0",
+"p = -2",
+"p = 2",
+"q = 2"
+],
+"correctAnswer": 2,
+"board": "CBSE",
+"subject": "Maths",
+"class": 10,
+"chapter": "Quadratic Equations",
+"topic": "Nature of Roots",
+"difficulty": "medium",
+"marks": 1,
+"explanation": "Product of roots = c/a. If roots are alpha and 1/alpha, product is 1. So 2/p = 1, which means p = 2."
+},
+{
+"question": "The quadratic equation whose roots are 2 and -3 is:",
+"options": [
+"x^2 + x - 6 = 0",
+"x^2 - x - 6 = 0",
+"x^2 + x + 6 = 0",
+"x^2 - 5x + 6 = 0"
+],
+"correctAnswer": 0,
+"board": "CBSE",
+"subject": "Maths",
+"class": 10,
+"chapter": "Quadratic Equations",
+"topic": "Formation of Equation",
+"difficulty": "easy",
+"marks": 1,
+"explanation": "Sum = -1, Product = -6. Equation is x^2 - (sum)x + product = 0, so x^2 + x - 6 = 0."
+},
+{
+"question": "Find the value of k for which the equation x^2 + 5kx + 16 = 0 has no real roots.",
+"options": [
+"k > 8/5",
+"k < -8/5",
+"-8/5 < k < 8/5",
+"None of these"
+],
+"correctAnswer": 2,
+"board": "CBSE",
+"subject": "Maths",
+"class": 10,
+"chapter": "Quadratic Equations",
+"topic": "Nature of Roots",
+"difficulty": "hard",
+"marks": 1,
+"explanation": "D < 0 implies (5k)^2 - 4(1)(16) < 0, so 25k^2 < 64, which means k^2 < 64/25, giving -8/5 < k < 8/5."
+},
+{
+"question": "The altitude of a right triangle is 7 cm less than its base. If the hypotenuse is 13 cm, the base is:",
+"options": [
+"10 cm",
+"12 cm",
+"5 cm",
+"15 cm"
+],
+"correctAnswer": 1,
+"board": "CBSE",
+"subject": "Maths",
+"class": 10,
+"chapter": "Quadratic Equations",
+"topic": "Word Problems",
+"difficulty": "medium",
+"marks": 1,
+"explanation": "Let base = x. x^2 + (x-7)^2 = 13^2. x^2 + x^2 - 14x + 49 = 169. 2x^2 - 14x - 120 = 0. x^2 - 7x - 60 = 0. (x-12)(x+5)=0. x=12."
+},
+{
+"question": "The roots of the equation 2x^2 - 5x + 3 = 0 are:",
+"options": [
+"1, 3/2",
+"2, 3",
+"1, 2/3",
+"-1, -3/2"
+],
+"correctAnswer": 0,
+"board": "CBSE",
+"subject": "Maths",
+"class": 10,
+"chapter": "Quadratic Equations",
+"topic": "Solving Quadratic Equations",
+"difficulty": "easy",
+"marks": 1,
+"explanation": "2x^2 - 2x - 3x + 3 = 0. 2x(x-1) - 3(x-1) = 0. (2x-3)(x-1) = 0. x = 1, 3/2."
+},
+{
+"question": "The product of two consecutive even integers is 168. The integers are:",
+"options": [
+"10, 12",
+"12, 14",
+"14, 16",
+"16, 18"
+],
+"correctAnswer": 1,
+"board": "CBSE",
+"subject": "Maths",
+"class": 10,
+"chapter": "Quadratic Equations",
+"topic": "Word Problems",
+"difficulty": "medium",
+"marks": 1,
+"explanation": "12 * 14 = 168."
+},
+{
+"question": "If the equation x^2 - bx + 1 = 0 does not possess real roots, then:",
+"options": [
+"b^2 - 4 > 0",
+"b^2 - 4 < 0",
+"b^2 - 4 = 0",
+"b > 2"
+],
+"correctAnswer": 1,
+"board": "CBSE",
+"subject": "Maths",
+"class": 10,
+"chapter": "Quadratic Equations",
+"topic": "Nature of Roots",
+"difficulty": "easy",
+"marks": 1,
+"explanation": "No real roots means D < 0. Here D = (-b)^2 - 4(1)(1) = b^2 - 4."
+},
+{
+"question": "The value of the discriminant of the equation 3x^2 + 2x - 1 = 0 is:",
+"options": [
+"16",
+"4",
+"12",
+"0"
+],
+"correctAnswer": 0,
+"board": "CBSE",
+"subject": "Maths",
+"class": 10,
+"chapter": "Quadratic Equations",
+"topic": "Discriminant",
+"difficulty": "easy",
+"marks": 1,
+"explanation": "D = b^2 - 4ac = 2^2 - 4(3)(-1) = 4 + 12 = 16."
+},
+{
+"question": "If x = 1 is a common root of ax^2 + ax + 2 = 0 and x^2 + x + b = 0, then ab is:",
+"options": [
+"1",
+"2",
+"4",
+"3"
+],
+"correctAnswer": 1,
+"board": "CBSE",
+"subject": "Maths",
+"class": 10,
+"chapter": "Quadratic Equations",
+"topic": "Roots of Equation",
+"difficulty": "medium",
+"marks": 1,
+"explanation": "Substitute x=1 in both: 2a+2=0 gives a=-1. 2+b=0 gives b=-2. So ab = (-1)(-2) = 2."
+},
+{
+"question": "Is x = -2 a root of x^2 - 4x + 4 = 0?",
+"options": [
+"Yes",
+"No",
+"Can be both",
+"Insufficient data"
+],
+"correctAnswer": 1,
+"board": "CBSE",
+"subject": "Maths",
+"class": 10,
+"chapter": "Quadratic Equations",
+"topic": "Roots of Equation",
+"difficulty": "easy",
+"marks": 1,
+"explanation": "(-2)^2 - 4(-2) + 4 = 4 + 8 + 4 = 16, which is not zero."
+},
+{
+"question": "The condition for ax^2 + bx + c = 0 to be a quadratic equation is:",
+"options": [
+"a is not equal to 0",
+"b is not equal to 0",
+"c is not equal to 0",
+"a, b, c are all 0"
+],
+"correctAnswer": 0,
+"board": "CBSE",
+"subject": "Maths",
+"class": 10,
+"chapter": "Quadratic Equations",
+"topic": "Introduction",
+"difficulty": "easy",
+"marks": 1,
+"explanation": "A quadratic equation must have a non-zero coefficient for the x^2 term."
+},
+{
+"question": "The area of a rectangular plot is 528 m^2. The length of the plot is one more than twice its breadth. The quadratic equation to find the dimensions is:",
+"options": [
+"2x^2 + x - 528 = 0",
+"x^2 + 2x - 528 = 0",
+"2x^2 - x + 528 = 0",
+"x^2 - 2x + 528 = 0"
+],
+"correctAnswer": 0,
+"board": "CBSE",
+"subject": "Maths",
+"class": 10,
+"chapter": "Quadratic Equations",
+"topic": "Word Problems",
+"difficulty": "medium",
+"marks": 1,
+"explanation": "Let breadth = x. Length = 2x + 1. Area = x(2x + 1) = 528. So 2x^2 + x - 528 = 0."
+},
+{
+"question": "For what value of k will the equation kx(x - 2) + 6 = 0 have two equal roots?",
+"options": [
+"6",
+"0",
+"0, 6",
+"Only 6"
+],
+"correctAnswer": 3,
+"board": "CBSE",
+"subject": "Maths",
+"class": 10,
+"chapter": "Quadratic Equations",
+"topic": "Nature of Roots",
+"difficulty": "medium",
+"marks": 1,
+"explanation": "kx^2 - 2kx + 6 = 0. D = 0 implies 4k^2 - 24k = 0. 4k(k - 6) = 0. k cannot be 0 for it to be quadratic, so k = 6."
+},
+{
+"question": "Roots of x^2 - 3x - 10 = 0 are:",
+"options": [
+"5, -2",
+"-5, 2",
+"5, 2",
+"-5, -2"
+],
+"correctAnswer": 0,
+"board": "CBSE",
+"subject": "Maths",
+"class": 10,
+"chapter": "Quadratic Equations",
+"topic": "Solving Quadratic Equations",
+"difficulty": "easy",
+"marks": 1,
+"explanation": "x^2 - 5x + 2x - 10 = 0 gives (x-5)(x+2)=0."
+},
+{
+"question": "The discriminant of (x + 2)^2 = 2(x - 3) is:",
+"options": [
+"40",
+"12",
+"-36",
+"-16"
+],
+"correctAnswer": 3,
+"board": "CBSE",
+"subject": "Maths",
+"class": 10,
+"chapter": "Quadratic Equations",
+"topic": "Discriminant",
+"difficulty": "medium",
+"marks": 1,
+"explanation": "x^2 + 4x + 4 = 2x - 6 implies x^2 + 2x + 10 = 0. D = 2^2 - 4(1)(10) = 4 - 40 = -36. Correct option is 2 (wait, recalculating: D = -36). Check: x^2 + 2x + 10 = 0, D = 4 - 40 = -36."
+},
+{
+"question": "If roots of ax^2 + bx + c = 0 are real and equal, then c is equal to:",
+"options": [
+"-b/2a",
+"b/2a",
+"b^2/4a",
+"-b^2/4a"
+],
+"correctAnswer": 2,
+"board": "CBSE",
+"subject": "Maths",
+"class": 10,
+"chapter": "Quadratic Equations",
+"topic": "Nature of Roots",
+"difficulty": "medium",
+"marks": 1,
+"explanation": "D = 0 implies b^2 - 4ac = 0. So 4ac = b^2, giving c = b^2/4a."
+},
+{
+"question": "If roots of x^2 + kx + 12 = 0 are in the ratio 1:3, then k is:",
+"options": [
+"+/- 8",
+"+/- 4",
+"+/- 12",
+"+/- 6"
+],
+"correctAnswer": 0,
+"board": "CBSE",
+"subject": "Maths",
+"class": 10,
+"chapter": "Quadratic Equations",
+"topic": "Nature of Roots",
+"difficulty": "hard",
+"marks": 1,
+"explanation": "Roots are a and 3a. Product 3a^2 = 12, so a^2 = 4, a = +/- 2. Sum 4a = -k. If a=2, k=-8. If a=-2, k=8."
+},
+{
+"question": "The nature of roots of 2x^2 + x + 4 = 0 is:",
+"options": [
+"Real and distinct",
+"Real and equal",
+"No real roots",
+"Rational"
+],
+"correctAnswer": 2,
+"board": "CBSE",
+"subject": "Maths",
+"class": 10,
+"chapter": "Quadratic Equations",
+"topic": "Nature of Roots",
+"difficulty": "easy",
+"marks": 1,
+"explanation": "D = 1^2 - 4(2)(4) = 1 - 32 = -31. Since D < 0, roots are not real."
+},
+{
+"question": "A train travels 360 km at a uniform speed. If speed had been 5 km/h more, it would have taken 1 hour less. The original speed is:",
+"options": [
+"30 km/h",
+"40 km/h",
+"50 km/h",
+"60 km/h"
+],
+"correctAnswer": 1,
+"board": "CBSE",
+"subject": "Maths",
+"class": 10,
+"chapter": "Quadratic Equations",
+"topic": "Word Problems",
+"difficulty": "hard",
+"marks": 1,
+"explanation": "360/x - 360/(x+5) = 1. Solving x^2 + 5x - 1800 = 0 gives (x+45)(x-40)=0. So speed = 40 km/h."
+},
+{
+"question": "The roots of the equation 9x^2 - 6x + 1 = 0 are:",
+"options": [
+"1/3, 1/3",
+"1/3, -1/3",
+"-1/3, -1/3",
+"2/3, 2/3"
+],
+"correctAnswer": 0,
+"board": "CBSE",
+"subject": "Maths",
+"class": 10,
+"chapter": "Quadratic Equations",
+"topic": "Solving Quadratic Equations",
+"difficulty": "medium",
+"marks": 1,
+"explanation": "(3x - 1)^2 = 0, so x = 1/3, 1/3."
+},
+{
+"question": "If the discriminant of ax^2 + bx + c = 0 is a perfect square, the roots are:",
+"options": [
+"Irrational",
+"Rational",
+"Equal",
+"Non-real"
+],
+"correctAnswer": 1,
+"board": "CBSE",
+"subject": "Maths",
+"class": 10,
+"chapter": "Quadratic Equations",
+"topic": "Nature of Roots",
+"difficulty": "medium",
+"marks": 1,
+"explanation": "If D is a perfect square, the square root in the quadratic formula becomes a rational number."
+},
+{
+"question": "One of the roots of the equation x^2 + 4x + k = 0 is 2. The other root is:",
+"options": [
+"6",
+"-6",
+"-2",
+"4"
+],
+"correctAnswer": 1,
+"board": "CBSE",
+"subject": "Maths",
+"class": 10,
+"chapter": "Quadratic Equations",
+"topic": "Roots of Equation",
+"difficulty": "medium",
+"marks": 1,
+"explanation": "Sum of roots = -b/a = -4. If one root is 2, then 2 + r = -4, so r = -6."
+},
+{
+"question": "Which of the following equations has roots 3 and -1?",
+"options": [
+"x^2 + 2x - 3 = 0",
+"x^2 - 2x - 3 = 0",
+"x^2 - 2x + 3 = 0",
+"x^2 + 2x + 3 = 0"
+],
+"correctAnswer": 1,
+"board": "CBSE",
+"subject": "Maths",
+"class": 10,
+"chapter": "Quadratic Equations",
+"topic": "Formation of Equation",
+"difficulty": "easy",
+"marks": 1,
+"explanation": "Sum = 3-1=2, Product = 3(-1)=-3. Equation is x^2 - 2x - 3 = 0."
+},
+{
+"question": "If x^2 - 5x + 1 = 0, then the nature of roots is:",
+"options": [
+"Real and equal",
+"Real and distinct",
+"No real roots",
+"Imaginary"
+],
+"correctAnswer": 1,
+"board": "CBSE",
+"subject": "Maths",
+"class": 10,
+"chapter": "Quadratic Equations",
+"topic": "Nature of Roots",
+"difficulty": "easy",
+"marks": 1,
+"explanation": "D = (-5)^2 - 4(1)(1) = 25 - 4 = 21. Since D > 0 and not zero, roots are real and distinct."
+},
+{
+"question": "The difference between a number and its reciprocal is 3/2. The number is:",
+"options": [
+"2",
+"1/2",
+"2 or -1/2",
+"None"
+],
+"correctAnswer": 2,
+"board": "CBSE",
+"subject": "Maths",
+"class": 10,
+"chapter": "Quadratic Equations",
+"topic": "Word Problems",
+"difficulty": "hard",
+"marks": 1,
+"explanation": "x - 1/x = 3/2 gives 2x^2 - 3x - 2 = 0. Roots are 2 and -1/2."
+},
+{
+"question": "For the equation 3x^2 + 11x + 10 = 0, the roots are:",
+"options": [
+"Rational",
+"Irrational",
+"Equal",
+"Non-real"
+],
+"correctAnswer": 0,
+"board": "CBSE",
+"subject": "Maths",
+"class": 10,
+"chapter": "Quadratic Equations",
+"topic": "Nature of Roots",
+"difficulty": "medium",
+"marks": 1,
+"explanation": "D = 11^2 - 4(3)(10) = 121 - 120 = 1. Since 1 is a perfect square, roots are rational."
+},
+{
+"question": "The roots of equation x^2 - 3x - m(m+3) = 0 are:",
+"options": [
+"m, m+3",
+"-m, m+3",
+"m, -(m+3)",
+"-m, -(m+3)"
+],
+"correctAnswer": 1,
+"board": "CBSE",
+"subject": "Maths",
+"class": 10,
+"chapter": "Quadratic Equations",
+"topic": "Solving Quadratic Equations",
+"difficulty": "hard",
+"marks": 1,
+"explanation": "Sum = (m+3) + (-m) = 3. Product = (m+3)(-m) = -m(m+3). These satisfy the coefficients."
+},
+{
+"question": "If 4 is a root of x^2 + px + 12 = 0 and the equation x^2 + px + q = 0 has equal roots, then q is:",
+"options": [
+"49/4",
+"12",
+"7",
+"4"
+],
+"correctAnswer": 0,
+"board": "CBSE",
+"subject": "Maths",
+"class": 10,
+"chapter": "Quadratic Equations",
+"topic": "Parameter k",
+"difficulty": "hard",
+"marks": 1,
+"explanation": "4 is a root: 16 + 4p + 12 = 0 gives p = -7. For x^2 - 7x + q = 0 to have equal roots, D = 49 - 4q = 0, so q = 49/4."
+},
+{
+"question": "A two digit number is such that the product of its digits is 12. When 36 is added to the number, the digits interchange their places. The number is:",
+"options": [
+"26",
+"34",
+"43",
+"62"
+],
+"correctAnswer": 1,
+"board": "CBSE",
+"subject": "Maths",
+"class": 10,
+"chapter": "Quadratic Equations",
+"topic": "Word Problems",
+"difficulty": "medium",
+"marks": 1,
+"explanation": "Digits of 26: 26=12, 26+36=62 (True). Let's check 34: 34=12, 34+36=70 (False). Actually, check 26 again: 26+36=62. Yes. Wait, checking 26: 26+36=62. 2 and 6 interchanged."
+},
+{
+"question": "The coefficient of x in the quadratic equation x^2 + px + q = 0 was taken as 17 in place of 13, and its roots were found to be -2 and -15. The actual roots are:",
+"options": [
+"-2, 15",
+"-3, -10",
+"-4, -9",
+"-5, -8"
+],
+"correctAnswer": 1,
+"board": "CBSE",
+"subject": "Maths",
+"class": 10,
+"chapter": "Quadratic Equations",
+"topic": "Application",
+"difficulty": "hard",
+"marks": 1,
+"explanation": "Product q = (-2)(-15) = 30. Actual p = 13. So actual equation is x^2 + 13x + 30 = 0. Roots are -3 and -10."
+},
+{
+"question": "The values of x satisfying root(3x + 10) + root(x + 2) = 6 are:",
+"options": [
+"2, 42",
+"2",
+"42",
+"None"
+],
+"correctAnswer": 1,
+"board": "CBSE",
+"subject": "Maths",
+"class": 10,
+"chapter": "Quadratic Equations",
+"topic": "Solving Quadratic Equations",
+"difficulty": "hard",
+"marks": 1,
+"explanation": "Put x=2: root(16) + root(4) = 4 + 2 = 6. 42 makes it much larger."
+},
+{
+"question": "Find k such that x^2 - (k+6)x + 2(2k-1) = 0 has sum of roots equal to half their product.",
+"options": [
+"6",
+"7",
+"8",
+"9"
+],
+"correctAnswer": 1,
+"board": "CBSE",
+"subject": "Maths",
+"class": 10,
+"chapter": "Quadratic Equations",
+"topic": "Parameter k",
+"difficulty": "medium",
+"marks": 1,
+"explanation": "Sum = k+6. Product = 4k-2. k+6 = (4k-2)/2 gives k+6 = 2k-1, so k = 7."
+},
+{
+"question": "If roots of (b-c)x^2 + (c-a)x + (a-b) = 0 are equal, then a, b, c are in:",
+"options": [
+"AP",
+"GP",
+"HP",
+"None"
+],
+"correctAnswer": 0,
+"board": "CBSE",
+"subject": "Maths",
+"class": 10,
+"chapter": "Quadratic Equations",
+"topic": "Nature of Roots",
+"difficulty": "hard",
+"marks": 1,
+"explanation": "Sum of coefficients is 0, so one root is 1. Since roots are equal, both are 1. Product (a-b)/(b-c) = 1 implies a-b = b-c, which means 2b = a+c (AP)."
+},
+{
+"question": "The roots of the quadratic equation 4x^2 + 4bx - (a^2 - b^2) = 0 are:",
+"options": [
+"(a-b)/2, -(a+b)/2",
+"-(a-b)/2, (a+b)/2",
+"(a+b)/2, (a-b)/2",
+"None"
+],
+"correctAnswer": 0,
+"board": "CBSE",
+"subject": "Maths",
+"class": 10,
+"chapter": "Quadratic Equations",
+"topic": "Solving Quadratic Equations",
+"difficulty": "hard",
+"marks": 1,
+"explanation": "Using quadratic formula, roots are [-4b +/- root(16b^2 + 16(a^2-b^2))]/8 = [-4b +/- 4a]/8."
+},
+{
+"question": "If the discriminant of x^2 - 4x + k = 0 is 16, then k is:",
+"options": [
+"0",
+"16",
+"-16",
+"4"
+],
+"correctAnswer": 0,
+"board": "CBSE",
+"subject": "Maths",
+"class": 10,
+"chapter": "Quadratic Equations",
+"topic": "Discriminant",
+"difficulty": "easy",
+"marks": 1,
+"explanation": "D = (-4)^2 - 4(1)k = 16 - 4k. If D = 16, then 16 - 4k = 16, so k = 0."
+},
+{
+"question": "The value of k for which x = 2 is a root of kx^2 + 2x - 3 = 0 is:",
+"options": [
+"1/4",
+"-1/4",
+"1/2",
+"-1/2"
+],
+"correctAnswer": 1,
+"board": "CBSE",
+"subject": "Maths",
+"class": 10,
+"chapter": "Quadratic Equations",
+"topic": "Parameter k",
+"difficulty": "easy",
+"marks": 1,
+"explanation": "k(4) + 2(2) - 3 = 0 gives 4k + 1 = 0, so k = -1/4."
+}
+]

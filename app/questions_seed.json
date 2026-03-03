@@ -1,0 +1,123 @@
+[
+  {
+    "question": "Value of sin 30°?",
+    "options": ["1/2", "√3/2", "1", "0"],
+    "correctAnswer": 0,
+    "board": "CBSE",
+    "subject": "Maths",
+    "class": 10,
+    "chapter": "Trigonometry",
+    "topic": "Trigonometric Ratios",
+    "difficulty": "easy",
+    "marks": 1
+  },
+  {
+    "question": "Value of cos 60°?",
+    "options": ["1/2", "√3/2", "1", "0"],
+    "correctAnswer": 0,
+    "board": "CBSE",
+    "subject": "Maths",
+    "class": 10,
+    "chapter": "Trigonometry",
+    "topic": "Trigonometric Ratios",
+    "difficulty": "easy",
+    "marks": 1
+  },
+  {
+    "question": "If discriminant is negative, roots are:",
+    "options": ["Real", "Equal", "Complex", "Rational"],
+    "correctAnswer": 2,
+    "board": "CBSE",
+    "subject": "Maths",
+    "class": 10,
+    "chapter": "Quadratic Equations",
+    "topic": "Nature of Roots",
+    "difficulty": "medium",
+    "marks": 1
+  },
+  {
+    "question": "Distance between (0,0) and (3,4)?",
+    "options": ["5", "6", "7", "4"],
+    "correctAnswer": 0,
+    "board": "CBSE",
+    "subject": "Maths",
+    "class": 10,
+    "chapter": "Coordinate Geometry",
+    "topic": "Distance Formula",
+    "difficulty": "easy",
+    "marks": 1
+  },
+  {
+    "question": "Sum of first n natural numbers?",
+    "options": ["n(n+1)/2", "n²", "n(n-1)/2", "2n"],
+    "correctAnswer": 0,
+    "board": "CBSE",
+    "subject": "Maths",
+    "class": 10,
+    "chapter": "Arithmetic Progressions",
+    "topic": "Sum Formula",
+    "difficulty": "easy",
+    "marks": 1
+  },
+
+  {
+    "question": "SI unit of electric current?",
+    "options": ["Volt", "Watt", "Ampere", "Ohm"],
+    "correctAnswer": 2,
+    "board": "CBSE",
+    "subject": "Physics",
+    "class": 10,
+    "chapter": "Electricity",
+    "topic": "Electric Current",
+    "difficulty": "easy",
+    "marks": 1
+  },
+  {
+    "question": "Ohm’s Law formula?",
+    "options": ["V = IR", "V = I/R", "R = VI", "P = VI"],
+    "correctAnswer": 0,
+    "board": "CBSE",
+    "subject": "Physics",
+    "class": 10,
+    "chapter": "Electricity",
+    "topic": "Ohm's Law",
+    "difficulty": "easy",
+    "marks": 1
+  },
+  {
+    "question": "Unit of power?",
+    "options": ["Joule", "Newton", "Watt", "Pascal"],
+    "correctAnswer": 2,
+    "board": "CBSE",
+    "subject": "Physics",
+    "class": 10,
+    "chapter": "Work and Energy",
+    "topic": "Power",
+    "difficulty": "easy",
+    "marks": 1
+  },
+  {
+    "question": "Speed of light is approximately?",
+    "options": ["3×10^8 m/s", "3×10^6 m/s", "3×10^5 m/s", "300 m/s"],
+    "correctAnswer": 0,
+    "board": "CBSE",
+    "subject": "Physics",
+    "class": 10,
+    "chapter": "Light",
+    "topic": "Reflection",
+    "difficulty": "medium",
+    "marks": 1
+  },
+  {
+    "question": "Image formed by convex lens for distant object?",
+    "options": ["Real & inverted", "Virtual & erect", "No image", "Magnified"],
+    "correctAnswer": 0,
+    "board": "CBSE",
+    "subject": "Physics",
+    "class": 10,
+    "chapter": "Light",
+    "topic": "Lenses",
+    "difficulty": "medium",
+    "marks": 1
+  }
+]
