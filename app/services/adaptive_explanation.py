@@ -9,31 +9,37 @@ from app.socratic import gemini
 # SAFE JSON EXTRACTION
 # =====================================================
 def extract_json(text: str) -> Dict[str, Any] | None:
-    """
-    Extracts the first valid JSON object from LLM output.
-    Handles markdown fences and extra text safely.
-    """
 
     if not text:
         return None
 
-    # Remove markdown code fences if present
     text = text.strip()
+
+    # remove markdown fences
     text = re.sub(r"```json", "", text)
     text = re.sub(r"```", "", text)
 
-    # Extract first {...} block
-    match = re.search(r"\{.*\}", text, re.DOTALL)
-    if not match:
+    start = text.find("{")
+    if start == -1:
         return None
 
-    json_block = match.group()
+    brace_count = 0
 
-    try:
-        return json.loads(json_block)
-    except Exception:
-        return None
+    for i in range(start, len(text)):
+        if text[i] == "{":
+            brace_count += 1
+        elif text[i] == "}":
+            brace_count -= 1
 
+            if brace_count == 0:
+                json_block = text[start:i+1]
+
+                try:
+                    return json.loads(json_block)
+                except:
+                    return None
+
+    return None
 
 # =====================================================
 # FALLBACK STRUCTURE
@@ -102,8 +108,11 @@ Only valid JSON.
     structured = extract_json(raw)
 
     if not structured:
-        return fallback_structure()
+        raw = gemini(prompt)
+        structured = extract_json(raw)
 
+    if not structured:
+        return fallback_structure()
     # Ensure required keys exist (safety validation)
     required_keys = [
         "definition",
