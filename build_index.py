@@ -9,7 +9,7 @@ import os
 # --------------------------------------------------
 # ENV
 # --------------------------------------------------
-ROOT_DIR = Path(__file__).resolve().parents[0]
+ROOT_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(ROOT_DIR / ".env")
 
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
