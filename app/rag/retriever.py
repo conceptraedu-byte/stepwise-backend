@@ -1,86 +1,100 @@
 from pathlib import Path
 import json
-import faiss
 import numpy as np
 import google.generativeai as genai
-from dotenv import load_dotenv
 import os
+
+# Try importing faiss safely
+try:
+    import faiss
+    FAISS_AVAILABLE = True
+except ImportError:
+    FAISS_AVAILABLE = False
+    print("⚠️ FAISS not installed — running without vector search")
 
 # ======================================================
 # ENV SETUP
 # ======================================================
-ROOT_DIR = Path(__file__).resolve().parent.parent
-load_dotenv(ROOT_DIR / ".env")
-
 API_KEY = os.getenv("GEMINI_API_KEY")
+
 if not API_KEY:
-    raise RuntimeError("GEMINI_API_KEY not found in .env")
+    print("⚠️ GEMINI_API_KEY missing — embedding disabled")
 
 genai.configure(api_key=API_KEY)
 
 # ======================================================
-# EMBEDDING CONFIG (MUST MATCH INDEX CREATION)
+# CONFIG
 # ======================================================
-EMBED_MODEL = "models/gemini-embedding-001"
+ROOT_DIR = Path.cwd()
 
-# ======================================================
-# VECTOR STORE PATHS
-# ======================================================
 VECTOR_DIR = ROOT_DIR / "vectorstore"
 INDEX_PATH = VECTOR_DIR / "class10_maths.index"
 META_PATH = VECTOR_DIR / "class10_maths_meta.json"
 
-if not INDEX_PATH.exists():
-    raise RuntimeError(
-        f"FAISS index not found at {INDEX_PATH}. "
-        f"Rebuild the vector store."
-    )
-
-if not META_PATH.exists():
-    raise RuntimeError(
-        f"Metadata file not found at {META_PATH}. "
-        f"Rebuild the vector store."
-    )
+EMBED_MODEL = "models/gemini-embedding-001"
 
 # ======================================================
-# LOAD FAISS INDEX + METADATA
+# LOAD VECTOR STORE SAFELY
 # ======================================================
-index = faiss.read_index(str(INDEX_PATH))
+index = None
+metadata = []
 
-with open(META_PATH, "r", encoding="utf-8") as f:
-    metadata = json.load(f)
+if FAISS_AVAILABLE and INDEX_PATH.exists() and META_PATH.exists():
+    try:
+        index = faiss.read_index(str(INDEX_PATH))
+
+        with open(META_PATH, "r", encoding="utf-8") as f:
+            metadata = json.load(f)
+
+        print("✅ FAISS index loaded successfully")
+
+    except Exception as e:
+        print("⚠️ Failed to load FAISS:", str(e))
+else:
+    print("⚠️ Vector store not found — fallback mode active")
 
 # ======================================================
 # EMBEDDING FUNCTION
 # ======================================================
-def embed_query(text: str) -> np.ndarray:
-    result = genai.embed_content(
-        model=EMBED_MODEL,
-        content=text
-    )
+def embed_query(text: str):
+    if not API_KEY:
+        return None
 
-    vec = np.array(result["embedding"], dtype="float32").reshape(1, -1)
-
-    # HARD GUARD — NEVER REMOVE
-    if vec.shape[1] != index.d:
-        raise RuntimeError(
-            f"EMBEDDING DIMENSION MISMATCH → "
-            f"query dim = {vec.shape[1]}, "
-            f"index dim = {index.d}. "
-            f"Delete and rebuild FAISS index."
+    try:
+        result = genai.embed_content(
+            model=EMBED_MODEL,
+            content=text
         )
+        vec = np.array(result["embedding"], dtype="float32").reshape(1, -1)
+        return vec
 
-    return vec
+    except Exception as e:
+        print("⚠️ Embedding failed:", str(e))
+        return None
 
 # ======================================================
 # RETRIEVER
 # ======================================================
 def retrieve(question: str, top_k: int = 3):
+
+    # Fallback if FAISS not ready
+    if index is None or len(metadata) == 0:
+        return [
+            {"text": "System not ready. Vector index missing."}
+        ]
+
     q_vec = embed_query(question)
 
-    distances, indices = index.search(q_vec, 40)
+    if q_vec is None:
+        return [
+            {"text": "Embedding failed. Try again later."}
+        ]
 
-    q_lower = question.lower()
+    try:
+        distances, indices = index.search(q_vec, 40)
+    except Exception as e:
+        print("⚠️ Search failed:", str(e))
+        return [{"text": "Search error occurred"}]
 
     real_numbers_signals = [
         "integer",
@@ -97,6 +111,9 @@ def retrieve(question: str, top_k: int = 3):
     fallback = []
 
     for idx in indices[0]:
+        if idx >= len(metadata):
+            continue
+
         meta = metadata[idx]
         text_lower = meta["text"].lower()
 

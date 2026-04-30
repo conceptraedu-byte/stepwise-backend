@@ -12,8 +12,7 @@ import os
 ROOT_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(ROOT_DIR / ".env")
 
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-
+genai.configure(api_key="AIzaSyAnYX5X0sqtXJglxTnODcWgB3Hh5IvFF-I")
 EMBED_MODEL = "models/gemini-embedding-001"
 
 VECTOR_DIR = ROOT_DIR / "vectorstore"
