@@ -161,21 +161,13 @@ class LoginRequest(BaseModel):
 
 import hashlib
 
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
 def hash_password(password: str):
-    try:
-        password = str(password)
-        password = password.strip()
-        password = password[:72]
-
-        return pwd_context.hash(password)
-
-    except Exception as e:
-        print("HASH ERROR:", e)
-        raise HTTPException(status_code=500, detail="Password hashing failed")
+    return pwd_context.hash(password.strip()[:72])
 
 def verify_password(plain_password, hashed_password):
-    plain_password = str(plain_password).strip()[:72]
-    return pwd_context.verify(plain_password, hashed_password)
+    return pwd_context.verify(plain_password.strip()[:72], hashed_password)
 
 
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
