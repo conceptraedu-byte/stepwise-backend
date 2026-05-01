@@ -110,6 +110,7 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:4200",
         "http://localhost:3000",
+        "https://neon-kleicha-d90bd1.netlify.app"
         # Add your production domain here
     ],
     allow_credentials=True,
