@@ -52,6 +52,15 @@ app = FastAPI(
     description="AI-powered tutoring system with Socratic method",
     version="2.0.0"
 )
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],   # 🔥 FORCE OPEN
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
   
 
 
@@ -105,18 +114,6 @@ def sanitize_json_string(text: str) -> str:
 # =========================
 # CORS (REQUIRED FOR ANGULAR)
 # =========================
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "http://localhost:4200",
-        "http://localhost:3000",
-        "https://neon-kleicha-d90bd1.netlify.app"
-        # Add your production domain here
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 # =========================
 # STARTUP & SHUTDOWN
