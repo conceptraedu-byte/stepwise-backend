@@ -162,10 +162,20 @@ class LoginRequest(BaseModel):
 import hashlib
 
 def hash_password(password: str):
-    return pwd_context.hash(password[:72])  # 🔥 correct fix
+    try:
+        password = str(password)
+        password = password.strip()
+        password = password[:72]
+
+        return pwd_context.hash(password)
+
+    except Exception as e:
+        print("HASH ERROR:", e)
+        raise HTTPException(status_code=500, detail="Password hashing failed")
 
 def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password[:72], hashed_password)
+    plain_password = str(plain_password).strip()[:72]
+    return pwd_context.verify(plain_password, hashed_password)
 
 
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
