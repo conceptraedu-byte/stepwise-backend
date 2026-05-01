@@ -162,12 +162,10 @@ class LoginRequest(BaseModel):
 import hashlib
 
 def hash_password(password: str):
-    sha = hashlib.sha256(password.encode()).hexdigest()
-    return pwd_context.hash(sha)
+    return pwd_context.hash(password[:72])  # 🔥 correct fix
 
 def verify_password(plain_password, hashed_password):
-    sha = hashlib.sha256(plain_password.encode()).hexdigest()
-    return pwd_context.verify(sha, hashed_password)
+    return pwd_context.verify(plain_password[:72], hashed_password)
 
 
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
